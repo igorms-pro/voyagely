@@ -1,0 +1,37 @@
+{
+  "app": {
+    "name": "Wanderly"
+  },
+  "common": {
+    "loading": "Laden...",
+    "error": "Fout",
+    "success": "Succes",
+    "cancel": "Annuleren",
+    "save": "Opslaan",
+    "delete": "Verwijderen",
+    "edit": "Bewerken",
+    "close": "Sluiten",
+    "back": "Terug",
+    "next": "Volgende",
+    "previous": "Vorige",
+    "submit": "Verzenden",
+    "reset": "Resetten",
+    "search": "Zoeken",
+    "filter": "Filter",
+    "sort": "Sorteren",
+    "refresh": "Vernieuwen",
+    "retry": "Opnieuw proberen",
+    "reload": "Herladen",
+    "language": "Taal"
+  },
+  "auth": {
+    "signIn": "Inloggen",
+    "getStarted": "Aan de slag"
+  },
+  "landing": {
+    "heroTitle": "Plan Je Perfecte Reis met AI-Aangedreven Reisschema's",
+    "heroSubtitle": "Maak gepersonaliseerde reisschema's in seconden, werk samen met vrienden en neem samen beslissingen.",
+    "heroDescription": "Maak gepersonaliseerde reisschema's in seconden, werk samen met vrienden en maak samen beslissingen. Je droomvakantie begint hier.",
+    "noCreditCard": "Geen creditcard vereist"
+  }
+}

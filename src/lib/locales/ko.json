@@ -1,0 +1,37 @@
+{
+  "app": {
+    "name": "Wanderly"
+  },
+  "common": {
+    "loading": "로딩 중...",
+    "error": "오류",
+    "success": "성공",
+    "cancel": "취소",
+    "save": "저장",
+    "delete": "삭제",
+    "edit": "편집",
+    "close": "닫기",
+    "back": "뒤로",
+    "next": "다음",
+    "previous": "이전",
+    "submit": "제출",
+    "reset": "초기화",
+    "search": "검색",
+    "filter": "필터",
+    "sort": "정렬",
+    "refresh": "새로고침",
+    "retry": "재시도",
+    "reload": "다시 로드",
+    "language": "언어"
+  },
+  "auth": {
+    "signIn": "로그인",
+    "getStarted": "시작하기"
+  },
+  "landing": {
+    "heroTitle": "AI 기반 일정으로 완벽한 여행 계획하기",
+    "heroSubtitle": "몇 초 만에 맞춤형 여행 일정을 만들고, 친구들과 협력하며 함께 결정하세요.",
+    "heroDescription": "몇 초 만에 맞춤형 여행 일정을 만들고, 친구들과 협력하며 함께 결정하세요. 꿈의 휴가가 여기서 시작됩니다.",
+    "noCreditCard": "신용카드 불필요"
+  }
+}

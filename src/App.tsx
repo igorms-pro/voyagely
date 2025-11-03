@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from 'next-themes';
 import { PostHogProvider } from './contexts/PostHogContext';
 import { useStore } from './lib/store';
 import { mockSupabase } from './lib/mock-supabase';
@@ -27,11 +28,11 @@ function App() {
       setSentryUser({
         id: currentUser.id,
         email: currentUser.email,
-        username: currentUser.displayName,
+        username: currentUser.display_name,
       });
       Analytics.identify(currentUser.id, {
         email: currentUser.email,
-        displayName: currentUser.displayName,
+        displayName: currentUser.display_name,
       });
     } else {
       clearSentryUser();
@@ -48,26 +49,28 @@ function App() {
   }, [setUser]);
 
   return (
-    <PostHogProvider>
-      <QueryClientProvider client={queryClient}>
-        <Router>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route
-              path="/dashboard"
-              element={user ? <DashboardPage /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/trip/:tripId"
-              element={user ? <TripDetailPage /> : <Navigate to="/login" replace />}
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Router>
-      </QueryClientProvider>
-    </PostHogProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <PostHogProvider>
+        <QueryClientProvider client={queryClient}>
+          <Router>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route
+                path="/dashboard"
+                element={user ? <DashboardPage /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/trip/:tripId"
+                element={user ? <TripDetailPage /> : <Navigate to="/login" replace />}
+              />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Router>
+        </QueryClientProvider>
+      </PostHogProvider>
+    </ThemeProvider>
   );
 }
 

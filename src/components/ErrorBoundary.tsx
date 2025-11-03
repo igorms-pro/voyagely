@@ -83,12 +83,14 @@ class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-export default Sentry.withErrorBoundary(ErrorBoundary, {
+const SentryErrorBoundary = Sentry.withErrorBoundary(ErrorBoundary, {
   fallback: ({ error, resetError }) => (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h1>
-        <p className="text-gray-600 mb-6">{error?.message || 'An unexpected error occurred'}</p>
+        <p className="text-gray-600 mb-6">
+          {error instanceof Error ? error.message : 'An unexpected error occurred'}
+        </p>
         <button
           onClick={resetError}
           className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition"
@@ -99,3 +101,5 @@ export default Sentry.withErrorBoundary(ErrorBoundary, {
     </div>
   ),
 });
+
+export default SentryErrorBoundary;

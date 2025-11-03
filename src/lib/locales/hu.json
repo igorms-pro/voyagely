@@ -1,0 +1,37 @@
+{
+  "app": {
+    "name": "Wanderly"
+  },
+  "common": {
+    "loading": "Betöltés...",
+    "error": "Hiba",
+    "success": "Siker",
+    "cancel": "Mégse",
+    "save": "Mentés",
+    "delete": "Törlés",
+    "edit": "Szerkesztés",
+    "close": "Bezárás",
+    "back": "Vissza",
+    "next": "Következő",
+    "previous": "Előző",
+    "submit": "Küldés",
+    "reset": "Visszaállítás",
+    "search": "Keresés",
+    "filter": "Szűrés",
+    "sort": "Rendezés",
+    "refresh": "Frissítés",
+    "retry": "Újra próbálkozás",
+    "reload": "Újratöltés",
+    "language": "Nyelv"
+  },
+  "auth": {
+    "signIn": "Bejelentkezés",
+    "getStarted": "Kezdés"
+  },
+  "landing": {
+    "heroTitle": "Tervezd Meg a Tökéletes Utazásod AI-Támogatott Útitervekkel",
+    "heroSubtitle": "Hozz létre személyre szabott útiterveket másodpercek alatt, együttműködj barátaiddal és közösen hozzatok döntéseket.",
+    "heroDescription": "Hozz létre személyre szabott útiterveket másodpercek alatt, együttműködj barátaiddal és közösen hozzatok döntéseket. Az álmod nyaralása itt kezdődik.",
+    "noCreditCard": "Nincs szükség bankkártyára"
+  }
+}

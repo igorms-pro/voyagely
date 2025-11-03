@@ -1,16 +1,5 @@
 # Wanderly Engineering Playbook (CTO-Level)
 
-## Agent Role and Operating Model
-
-- **Agent mission**: Orchestrate AI-assisted trip planning, collaboration, and real-time coordination while enforcing security, cost, and performance guardrails.
-- **Core responsibilities**:
-  - **Intent capture**: Translate user inputs (destination, dates, preferences) into structured constraints for itinerary generation.
-  - **AI orchestration**: Call provider models with versioned prompts; enforce schema-valid JSON; apply safety, validation, deduplication.
-  - **Context assembly**: Enrich with weather, places/POI, routing, and FX via provider abstraction layer; cache and throttle to control spend.
-  - **Collaboration glue**: Emit real-time events (chat, presence, votes, itinerary updates) with idempotency and ordering guarantees.
-  - **Governance**: Respect RLS, roles, and audit; capture model/version, token usage, and change history for reproducibility.
-- **Success metrics**: Plan acceptance rate, time-conflict rate, chat latency, reconnection success, API error rates, and spend per user/trip.
-
 ## Architecture (High-Level)
 
 - **Client SPA (Vite + React + TS)**: Mobile-first UI, offline caches, optimistic updates, Testing Library + Vitest for unit/UX tests.
@@ -70,7 +59,7 @@
 - **Documentation**
   - Architecture and roles live in `docs/`; prompts and templates versioned; API contracts and event catalogs maintained.
 
-## Agent Execution Playbooks
+## System Execution Playbooks
 
 - **Itinerary generation**: Gather constraints -> fetch context -> call model -> parse/validate -> persist -> emit events -> audit.
 - **Provider errors**: Classify (429/timeouts/schema/policy) -> retry/backoff -> partial regeneration or cached fallback -> notify UI.
@@ -82,4 +71,4 @@
 
 ---
 
-This document is the engineering north star for Wanderly and the reference for agents operating within it.
+This document is the engineering north star for Wanderly and the reference for developers and systems operating within it.

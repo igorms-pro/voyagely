@@ -1,0 +1,37 @@
+{
+  "app": {
+    "name": "Wanderly"
+  },
+  "common": {
+    "loading": "Laddar...",
+    "error": "Fel",
+    "success": "Framgång",
+    "cancel": "Avbryt",
+    "save": "Spara",
+    "delete": "Radera",
+    "edit": "Redigera",
+    "close": "Stäng",
+    "back": "Tillbaka",
+    "next": "Nästa",
+    "previous": "Föregående",
+    "submit": "Skicka",
+    "reset": "Återställ",
+    "search": "Sök",
+    "filter": "Filtrera",
+    "sort": "Sortera",
+    "refresh": "Uppdatera",
+    "retry": "Försök igen",
+    "reload": "Ladda om",
+    "language": "Språk"
+  },
+  "auth": {
+    "signIn": "Logga in",
+    "getStarted": "Kom igång"
+  },
+  "landing": {
+    "heroTitle": "Planera Din Perfekta Resa med AI-Drivna Reseplaner",
+    "heroSubtitle": "Skapa personaliserade reseplaner på sekunder, samarbeta med vänner och fatta beslut tillsammans.",
+    "heroDescription": "Skapa personaliserade reseplaner på sekunder, samarbeta med vänner och fatta beslut tillsammans. Din drömresa börjar här.",
+    "noCreditCard": "Inget kreditkort krävs"
+  }
+}

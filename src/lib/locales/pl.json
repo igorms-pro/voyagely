@@ -1,0 +1,37 @@
+{
+  "app": {
+    "name": "Wanderly"
+  },
+  "common": {
+    "loading": "Ładowanie...",
+    "error": "Błąd",
+    "success": "Sukces",
+    "cancel": "Anuluj",
+    "save": "Zapisz",
+    "delete": "Usuń",
+    "edit": "Edytuj",
+    "close": "Zamknij",
+    "back": "Wstecz",
+    "next": "Dalej",
+    "previous": "Poprzedni",
+    "submit": "Wyślij",
+    "reset": "Resetuj",
+    "search": "Szukaj",
+    "filter": "Filtruj",
+    "sort": "Sortuj",
+    "refresh": "Odśwież",
+    "retry": "Spróbuj ponownie",
+    "reload": "Przeładuj",
+    "language": "Język"
+  },
+  "auth": {
+    "signIn": "Zaloguj się",
+    "getStarted": "Rozpocznij"
+  },
+  "landing": {
+    "heroTitle": "Zaplanuj Swoją Idealną Podróż z Harmonogramami Wspieranymi przez Sztuczną Inteligencję",
+    "heroSubtitle": "Twórz spersonalizowane harmonogramy podróży w sekundach, współpracuj z przyjaciółmi i podejmuj decyzje razem.",
+    "heroDescription": "Twórz spersonalizowane harmonogramy podróży w sekundach, współpracuj z przyjaciółmi i podejmuj decyzje razem. Twoja wymarzona podróż zaczyna się tutaj.",
+    "noCreditCard": "Karta kredytowa nie jest wymagana"
+  }
+}

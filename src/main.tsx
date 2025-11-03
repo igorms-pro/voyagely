@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ErrorBoundary } from './components/ErrorBoundary.tsx';
+import ErrorBoundary from './components/ErrorBoundary.tsx';
 import './index.css';
 // Initialize i18n before components render
 import './lib/i18n.ts';
@@ -21,4 +21,4 @@ createRoot(document.getElementById('root')!).render(
       <App />
     </ErrorBoundary>
   </StrictMode>,
-)
+);

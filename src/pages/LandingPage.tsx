@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Plane,
   Sparkles,
@@ -10,10 +11,13 @@ import {
   ArrowRight,
   Check,
 } from 'lucide-react';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { ThemeToggle } from '../components/ThemeToggle';
 
 export default function LandingPage() {
+  const { t } = useTranslation();
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700">
         {/* Navigation */}
@@ -25,18 +29,17 @@ export default function LandingPage() {
               </div>
               <span className="ml-3 text-xl font-bold text-white">Wanderly</span>
             </div>
-            <div className="flex items-center space-x-4">
-              <Link
-                to="/login"
-                className="text-white hover:text-blue-100 font-medium transition"
-              >
-                Sign In
+            <div className="flex items-center space-x-3">
+              <LanguageSwitcher variant="dropdown" size="md" />
+              <ThemeToggle />
+              <Link to="/login" className="text-white hover:text-blue-100 font-medium transition">
+                {t('auth.signIn')}
               </Link>
               <Link
                 to="/signup"
                 className="px-6 py-2 bg-white text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition"
               >
-                Get Started
+                {t('auth.getStarted')}
               </Link>
             </div>
           </div>
@@ -45,13 +48,12 @@ export default function LandingPage() {
         {/* Hero Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
-            Plan Your Perfect Trip
+            {t('landing.heroTitle')}
             <br />
-            <span className="text-blue-200">with AI-Powered Itineraries</span>
+            <span className="text-blue-200">{t('landing.heroSubtitle')}</span>
           </h1>
           <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-            Create personalized travel itineraries in seconds, collaborate with friends, and make
-            decisions together. Your dream vacation starts here.
+            {t('landing.heroDescription')}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
             <Link
@@ -59,11 +61,11 @@ export default function LandingPage() {
               className="inline-flex items-center px-8 py-4 bg-white text-blue-600 rounded-xl font-bold text-lg hover:bg-blue-50 transition shadow-xl hover:shadow-2xl"
             >
               <Sparkles className="w-6 h-6 mr-2" />
-              Start Planning for Free
+              {t('landing.heroTitle')}
               <ArrowRight className="w-6 h-6 ml-2" />
             </Link>
           </div>
-          <p className="mt-4 text-sm text-blue-200">No credit card required</p>
+          <p className="mt-4 text-sm text-blue-200">{t('landing.noCreditCard')}</p>
         </div>
 
         {/* Decorative Elements */}
@@ -164,9 +166,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">How It Works</h2>
-            <p className="text-xl text-gray-600">
-              Three simple steps to your perfect itinerary
-            </p>
+            <p className="text-xl text-gray-600">Three simple steps to your perfect itinerary</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">

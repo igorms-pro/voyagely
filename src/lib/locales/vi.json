@@ -1,0 +1,37 @@
+{
+  "app": {
+    "name": "Wanderly"
+  },
+  "common": {
+    "loading": "Đang tải...",
+    "error": "Lỗi",
+    "success": "Thành công",
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "delete": "Xóa",
+    "edit": "Chỉnh sửa",
+    "close": "Đóng",
+    "back": "Quay lại",
+    "next": "Tiếp theo",
+    "previous": "Trước đó",
+    "submit": "Gửi",
+    "reset": "Đặt lại",
+    "search": "Tìm kiếm",
+    "filter": "Lọc",
+    "sort": "Sắp xếp",
+    "refresh": "Làm mới",
+    "retry": "Thử lại",
+    "reload": "Tải lại",
+    "language": "Ngôn ngữ"
+  },
+  "auth": {
+    "signIn": "Đăng nhập",
+    "getStarted": "Bắt đầu"
+  },
+  "landing": {
+    "heroTitle": "Lập Kế Hoạch Chuyến Đi Hoàn Hảo Của Bạn Với Lịch Trình Du Lịch Được Hỗ Trợ Bởi AI",
+    "heroSubtitle": "Tạo lịch trình du lịch được cá nhân hóa trong vài giây, cộng tác với bạn bè và đưa ra quyết định cùng nhau.",
+    "heroDescription": "Tạo lịch trình du lịch được cá nhân hóa trong vài giây, cộng tác với bạn bè và đưa ra quyết định cùng nhau. Chuyến đi mơ ước của bạn bắt đầu từ đây.",
+    "noCreditCard": "Không cần thẻ tín dụng"
+  }
+}

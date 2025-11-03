@@ -1,0 +1,37 @@
+{
+  "app": {
+    "name": "Wanderly"
+  },
+  "common": {
+    "loading": "Yükleniyor...",
+    "error": "Hata",
+    "success": "Başarılı",
+    "cancel": "İptal",
+    "save": "Kaydet",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "close": "Kapat",
+    "back": "Geri",
+    "next": "İleri",
+    "previous": "Önceki",
+    "submit": "Gönder",
+    "reset": "Sıfırla",
+    "search": "Ara",
+    "filter": "Filtrele",
+    "sort": "Sırala",
+    "refresh": "Yenile",
+    "retry": "Tekrar Dene",
+    "reload": "Yeniden Yükle",
+    "language": "Dil"
+  },
+  "auth": {
+    "signIn": "Giriş Yap",
+    "getStarted": "Başlayın"
+  },
+  "landing": {
+    "heroTitle": "AI Destekli Seyahat Programları ile Mükemmel Seyahatinizi Planlayın",
+    "heroSubtitle": "Saniyeler içinde kişiselleştirilmiş seyahat programları oluşturun, arkadaşlarınızla işbirliği yapın ve birlikte kararlar alın.",
+    "heroDescription": "Saniyeler içinde kişiselleştirilmiş seyahat programları oluşturun, arkadaşlarınızla işbirliği yapın ve birlikte kararlar alın. Hayalinizdeki tatil buradan başlıyor.",
+    "noCreditCard": "Kredi kartı gerekmez"
+  }
+}

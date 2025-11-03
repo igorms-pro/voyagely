@@ -13,14 +13,47 @@ import zhTranslations from './locales/zh.json';
 import deTranslations from './locales/de.json';
 import itTranslations from './locales/it.json';
 import ruTranslations from './locales/ru.json';
+import nlTranslations from './locales/nl.json';
+import koTranslations from './locales/ko.json';
+import arTranslations from './locales/ar.json';
+import trTranslations from './locales/tr.json';
+import plTranslations from './locales/pl.json';
+import svTranslations from './locales/sv.json';
+import noTranslations from './locales/no.json';
+import fiTranslations from './locales/fi.json';
+import csTranslations from './locales/cs.json';
+import huTranslations from './locales/hu.json';
+import viTranslations from './locales/vi.json';
 
 // Configure i18next
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    // Available languages
-    supportedLngs: ['en', 'fr', 'es', 'pt', 'pt-BR', 'ja', 'zh', 'de', 'it', 'ru'],
+    // Available languages (20 total)
+    supportedLngs: [
+      'en',
+      'fr',
+      'es',
+      'pt',
+      'pt-BR',
+      'ja',
+      'zh',
+      'de',
+      'it',
+      'ru',
+      'nl',
+      'ko',
+      'ar',
+      'tr',
+      'pl',
+      'sv',
+      'no',
+      'fi',
+      'cs',
+      'hu',
+      'vi',
+    ],
 
     // Default language
     fallbackLng: 'en',
@@ -70,6 +103,39 @@ i18n
       },
       ru: {
         translation: ruTranslations,
+      },
+      nl: {
+        translation: nlTranslations,
+      },
+      ko: {
+        translation: koTranslations,
+      },
+      ar: {
+        translation: arTranslations,
+      },
+      tr: {
+        translation: trTranslations,
+      },
+      pl: {
+        translation: plTranslations,
+      },
+      sv: {
+        translation: svTranslations,
+      },
+      no: {
+        translation: noTranslations,
+      },
+      fi: {
+        translation: fiTranslations,
+      },
+      cs: {
+        translation: csTranslations,
+      },
+      hu: {
+        translation: huTranslations,
+      },
+      vi: {
+        translation: viTranslations,
       },
     },
 

@@ -1,0 +1,37 @@
+{
+  "app": {
+    "name": "Wanderly"
+  },
+  "common": {
+    "loading": "Načítání...",
+    "error": "Chyba",
+    "success": "Úspěch",
+    "cancel": "Zrušit",
+    "save": "Uložit",
+    "delete": "Smazat",
+    "edit": "Upravit",
+    "close": "Zavřít",
+    "back": "Zpět",
+    "next": "Další",
+    "previous": "Předchozí",
+    "submit": "Odeslat",
+    "reset": "Resetovat",
+    "search": "Hledat",
+    "filter": "Filtrovat",
+    "sort": "Seřadit",
+    "refresh": "Obnovit",
+    "retry": "Zkusit znovu",
+    "reload": "Znovu načíst",
+    "language": "Jazyk"
+  },
+  "auth": {
+    "signIn": "Přihlásit se",
+    "getStarted": "Začít"
+  },
+  "landing": {
+    "heroTitle": "Naplánujte Si Svou Ideální Cestu s AI-Poháněnými Cestovními Itineráři",
+    "heroSubtitle": "Vytvářejte personalizované cestovní itineráře během několika sekund, spolupracujte s přáteli a společně se rozhodujte.",
+    "heroDescription": "Vytvářejte personalizované cestovní itineráře během několika sekund, spolupracujte s přáteli a společně se rozhodujte. Vaše vysněná dovolená začíná zde.",
+    "noCreditCard": "Kreditní karta není vyžadována"
+  }
+}

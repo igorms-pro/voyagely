@@ -5,13 +5,57 @@ export const useLanguage = () => {
   const { i18n, ready } = useTranslation();
 
   const availableLanguages = useMemo(
-    () => ['en', 'fr', 'es', 'pt', 'pt-BR', 'ja', 'zh', 'de', 'it', 'ru'] as const,
+    () =>
+      [
+        'en',
+        'fr',
+        'es',
+        'pt',
+        'pt-BR',
+        'ja',
+        'zh',
+        'de',
+        'it',
+        'ru',
+        'nl',
+        'ko',
+        'ar',
+        'tr',
+        'pl',
+        'sv',
+        'no',
+        'fi',
+        'cs',
+        'hu',
+        'vi',
+      ] as const,
     [],
   );
 
   const changeLanguage = useCallback(
     (
-      language: 'en' | 'fr' | 'es' | 'pt' | 'pt-BR' | 'ja' | 'zh' | 'de' | 'it' | 'ru',
+      language:
+        | 'en'
+        | 'fr'
+        | 'es'
+        | 'pt'
+        | 'pt-BR'
+        | 'ja'
+        | 'zh'
+        | 'de'
+        | 'it'
+        | 'ru'
+        | 'nl'
+        | 'ko'
+        | 'ar'
+        | 'tr'
+        | 'pl'
+        | 'sv'
+        | 'no'
+        | 'fi'
+        | 'cs'
+        | 'hu'
+        | 'vi',
     ) => {
       if (ready && i18n.isInitialized) {
         i18n.changeLanguage(language);

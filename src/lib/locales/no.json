@@ -1,0 +1,37 @@
+{
+  "app": {
+    "name": "Wanderly"
+  },
+  "common": {
+    "loading": "Laster...",
+    "error": "Feil",
+    "success": "Suksess",
+    "cancel": "Avbryt",
+    "save": "Lagre",
+    "delete": "Slett",
+    "edit": "Rediger",
+    "close": "Lukk",
+    "back": "Tilbake",
+    "next": "Neste",
+    "previous": "Forrige",
+    "submit": "Send",
+    "reset": "Tilbakestill",
+    "search": "Søk",
+    "filter": "Filtrer",
+    "sort": "Sorter",
+    "refresh": "Oppdater",
+    "retry": "Prøv igjen",
+    "reload": "Last inn på nytt",
+    "language": "Språk"
+  },
+  "auth": {
+    "signIn": "Logg inn",
+    "getStarted": "Kom i gang"
+  },
+  "landing": {
+    "heroTitle": "Planlegg Din Perfekte Tur med AI-Drevne Reiseplaner",
+    "heroSubtitle": "Opprett tilpassede reiseplaner på sekunder, samarbeid med venner og ta beslutninger sammen.",
+    "heroDescription": "Opprett tilpassede reiseplaner på sekunder, samarbeid med venner og ta beslutninger sammen. Din drømmeferie starter her.",
+    "noCreditCard": "Ingen kredittkort kreves"
+  }
+}
