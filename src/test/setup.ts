@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { expect, afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
+import '../lib/i18n'; // Initialize i18n for tests
 
 // Mock window.matchMedia for next-themes
 Object.defineProperty(window, 'matchMedia', {

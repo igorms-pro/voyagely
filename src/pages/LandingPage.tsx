@@ -27,7 +27,9 @@ export default function LandingPage() {
               <div className="flex items-center justify-center w-10 h-10 bg-white rounded-xl">
                 <Plane className="w-6 h-6 text-blue-600" />
               </div>
-              <span className="ml-3 text-xl font-bold text-white">Wanderly</span>
+              <span className="ml-3 text-xl font-bold text-white" data-testid="wanderly-brand">
+                Wanderly
+              </span>
             </div>
             <div className="flex items-center space-x-3">
               <LanguageSwitcher variant="dropdown" size="md" />

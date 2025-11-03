@@ -1,8 +1,15 @@
+import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
+import { BrowserRouter } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
 
 describe('App', () => {
-  it('should render app', () => {
-    // Placeholder test - will be implemented with proper router setup
-    expect(true).toBe(true);
+  it('renders landing page with Wanderly brand', () => {
+    render(
+      <BrowserRouter>
+        <LandingPage />
+      </BrowserRouter>,
+    );
+    expect(screen.getByTestId('wanderly-brand')).toBeInTheDocument();
   });
 });
