@@ -156,40 +156,40 @@
 
 ### Real-Time Features
 
-- [ ] 🔴 Supabase Realtime setup
-  - Configure channels per trip
-  - Set up presence tracking
-  - Implement channel authorization
-- [ ] 🔴 Real-time chat implementation
-  - Message sending/receiving
-  - Message history loading
-  - Typing indicators
-  - Online/offline presence
-  - Message reactions (optional)
-- [ ] 🔴 Real-time activity updates
-  - Activity proposal notifications
-  - Vote count updates
-  - Activity status changes
+- [x] 🟢 Supabase Realtime setup
+  - [x] Configure channels per trip
+  - [ ] Set up presence tracking
+  - [x] Implement channel authorization (via RLS)
+- [x] 🟢 Real-time chat implementation
+  - [x] Message sending/receiving
+  - [x] Message history loading
+  - [ ] Typing indicators
+  - [ ] Online/offline presence
+  - [ ] Message reactions (optional)
+- [x] 🟢 Real-time activity updates
+  - [x] Activity proposal notifications (subscriptions ready)
+  - [ ] Vote count updates (needs votes CRUD)
+  - [x] Activity status changes (subscriptions ready)
 
 ### Basic Trip Management
 
-- [ ] 🔴 Trip creation flow
-  - Create trip modal/form
-  - Destination input with autocomplete
-  - Date range selection
-  - Group size input
-  - Budget input
-  - Invite link generation
-- [ ] 🔴 Trip dashboard
-  - List all user trips
-  - Filter by status (planned, locked, archived)
-  - Search trips
-  - Trip cards with key info
-- [ ] 🔴 Trip detail page
-  - Trip overview
-  - Member management
-  - Invite management
-  - Trip settings
+- [x] 🟢 Trip creation flow
+  - [x] Create trip modal/form
+  - [ ] Destination input with autocomplete (basic text input works)
+  - [x] Date range selection
+  - [x] Group size input
+  - [x] Budget input
+  - [ ] Invite link generation
+- [x] 🟢 Trip dashboard
+  - [x] List all user trips
+  - [x] Filter by status (planned, locked, archived)
+  - [x] Search trips
+  - [x] Trip cards with key info
+- [x] 🟢 Trip detail page
+  - [x] Trip overview
+  - [x] Member management (view members)
+  - [ ] Invite management
+  - [x] Trip settings (edit/delete)
 
 ---
 
@@ -514,7 +514,9 @@
 
 - [x] 🟢 Set up Supabase project and database schema
 - [x] 🟢 Replace mock authentication with Supabase Auth
-- [ ] 🔴 Implement basic trip CRUD operations
+- [x] 🟢 Implement basic trip CRUD operations
+- [x] 🟢 Realtime setup (migration 003)
+- [x] 🟢 Realtime service implementation
 
 ### Completed ✅
 
@@ -532,12 +534,17 @@
 - [x] 🟢 RLS policies for all tables (Agent-3, 002_rls_policies.sql)
 - [x] 🟢 Auth components updated (LoginPage, SignupPage) (Agent-4)
 - [x] 🟢 User state management with auth functions (Agent-5)
+- [x] 🟢 Trip CRUD operations (load, create, update, delete)
+- [x] 🟢 Trip dashboard with filters, search, sorting
+- [x] 🟢 Realtime service setup (trips, messages, activities subscriptions)
+- [x] 🟢 Real-time chat implementation (messages load/send)
 
 ### Next Week
 
+- [ ] 🔴 Activities CRUD (load from Supabase, create activities)
+- [ ] 🔴 Votes CRUD (load from Supabase, create/update votes)
 - [ ] 🔴 AI itinerary generation MVP
-- [ ] 🔴 Real-time chat implementation
-- [ ] 🔴 Basic voting system
+- [ ] 🔴 Member invitations system
 
 ---
 
@@ -604,7 +611,7 @@ _External dependencies or blockers will be noted here_
 ### Overall Progress
 
 - **Project Initialization**: 🟢 100% - ✅ COMPLETE (All tooling, i18n, theme, tests, CI/CD)
-- Phase 0 (Foundation): 🟡 40% - Supabase setup complete, auth working, needs trip CRUD
+- Phase 0 (Foundation): 🟡 65% - Supabase setup complete, auth working, trip CRUD done, realtime ready, needs activities/votes
 - Phase 1 (AI): 🔴 0% - Not started
 - Phase 2 (Collaboration): 🔴 0% - Not started
 - Phase 3 (UX/UI): 🟡 30% - Basic UI + i18n + theme + monitoring
@@ -615,4 +622,4 @@ _External dependencies or blockers will be noted here_
 - Phase 8 (Production): 🟡 50% - CI/CD complete, needs deployment config
 - Phase 9 (Testing): 🟢 80% - Full test infrastructure, needs coverage
 
-**Overall SaaS Completion: ~25%** (Infrastructure + Auth + Database complete, features in progress)
+**Overall SaaS Completion: ~30%** (Infrastructure + Auth + Database + Trip CRUD + Realtime complete, activities/votes pending)
