@@ -36,6 +36,20 @@ interface AppState {
   addTrip: (trip: Trip) => void;
   updateTripInState: (tripId: string, updates: Partial<Trip>) => void;
 
+  // Trip CRUD operations
+  loadTrips: () => Promise<void>;
+  createTrip: (tripData: {
+    title: string;
+    destination_text: string;
+    start_date: string;
+    end_date: string;
+    status?: 'planned' | 'locked' | 'archived';
+    budget_cents?: number;
+    currency?: string;
+  }) => Promise<Trip>;
+  updateTrip: (tripId: string, updates: Partial<Trip>) => Promise<void>;
+  deleteTrip: (tripId: string) => Promise<void>;
+
   // Activities state
   activities: Activity[];
   setActivities: (activities: Activity[]) => void;
@@ -226,6 +240,205 @@ export const useStore = create<AppState>((set, get) => ({
       currentTrip:
         state.currentTrip?.id === tripId ? { ...state.currentTrip, ...updates } : state.currentTrip,
     })),
+
+  // Trip CRUD operations
+  loadTrips: async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        set({ trips: [] });
+        return;
+      }
+
+      // Get trips where user is a member (via trip_members table)
+      const { data: memberships, error: membershipsError } = await supabase
+        .from('trip_members')
+        .select('trip_id')
+        .eq('user_id', user.id)
+        .is('removed_at', null);
+
+      if (membershipsError) {
+        console.error('Error loading trip memberships:', membershipsError);
+        throw membershipsError;
+      }
+
+      if (!memberships || memberships.length === 0) {
+        set({ trips: [] });
+        return;
+      }
+
+      const tripIds = memberships.map((m) => m.trip_id);
+
+      // Fetch trips that are not deleted
+      const { data: trips, error: tripsError } = await supabase
+        .from('trips')
+        .select('*')
+        .in('id', tripIds)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+
+      if (tripsError) {
+        console.error('Error loading trips:', tripsError);
+        throw tripsError;
+      }
+
+      // Map database Trip to mock Trip format
+      const mappedTrips: Trip[] = (trips || []).map((trip) => ({
+        id: trip.id,
+        owner_id: trip.owner_id,
+        title: trip.title,
+        destination_text: trip.destination_text,
+        start_date: trip.start_date,
+        end_date: trip.end_date,
+        status: trip.status,
+        budget_cents: trip.budget_cents ?? undefined,
+        currency: trip.currency ?? undefined,
+        created_at: trip.created_at,
+        updated_at: trip.updated_at,
+      }));
+
+      set({ trips: mappedTrips });
+    } catch (error) {
+      console.error('Error loading trips:', error);
+      throw error;
+    }
+  },
+
+  createTrip: async (tripData) => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const { data: trip, error } = await supabase
+        .from('trips')
+        .insert({
+          owner_id: user.id,
+          title: tripData.title,
+          destination_text: tripData.destination_text,
+          start_date: tripData.start_date,
+          end_date: tripData.end_date,
+          status: tripData.status || 'planned',
+          budget_cents: tripData.budget_cents ?? null,
+          currency: tripData.currency ?? null,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating trip:', error);
+        throw error;
+      }
+
+      if (!trip) {
+        throw new Error('Failed to create trip');
+      }
+
+      // Map database Trip to mock Trip format
+      const mappedTrip: Trip = {
+        id: trip.id,
+        owner_id: trip.owner_id,
+        title: trip.title,
+        destination_text: trip.destination_text,
+        start_date: trip.start_date,
+        end_date: trip.end_date,
+        status: trip.status,
+        budget_cents: trip.budget_cents ?? undefined,
+        currency: trip.currency ?? undefined,
+        created_at: trip.created_at,
+        updated_at: trip.updated_at,
+      };
+
+      // Add to state (owner is automatically added as member via trigger)
+      set((state) => ({ trips: [mappedTrip, ...state.trips] }));
+
+      return mappedTrip;
+    } catch (error) {
+      console.error('Error creating trip:', error);
+      throw error;
+    }
+  },
+
+  updateTrip: async (tripId, updates) => {
+    try {
+      const updateData: any = {};
+      if (updates.title !== undefined) updateData.title = updates.title;
+      if (updates.destination_text !== undefined)
+        updateData.destination_text = updates.destination_text;
+      if (updates.start_date !== undefined) updateData.start_date = updates.start_date;
+      if (updates.end_date !== undefined) updateData.end_date = updates.end_date;
+      if (updates.status !== undefined) updateData.status = updates.status;
+      if (updates.budget_cents !== undefined)
+        updateData.budget_cents = updates.budget_cents ?? null;
+      if (updates.currency !== undefined) updateData.currency = updates.currency ?? null;
+
+      const { data: trip, error } = await supabase
+        .from('trips')
+        .update(updateData)
+        .eq('id', tripId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating trip:', error);
+        throw error;
+      }
+
+      if (!trip) {
+        throw new Error('Trip not found');
+      }
+
+      // Map database Trip to mock Trip format
+      const mappedTrip: Trip = {
+        id: trip.id,
+        owner_id: trip.owner_id,
+        title: trip.title,
+        destination_text: trip.destination_text,
+        start_date: trip.start_date,
+        end_date: trip.end_date,
+        status: trip.status,
+        budget_cents: trip.budget_cents ?? undefined,
+        currency: trip.currency ?? undefined,
+        created_at: trip.created_at,
+        updated_at: trip.updated_at,
+      };
+
+      // Update state
+      get().updateTripInState(tripId, mappedTrip);
+    } catch (error) {
+      console.error('Error updating trip:', error);
+      throw error;
+    }
+  },
+
+  deleteTrip: async (tripId) => {
+    try {
+      // Soft delete by setting deleted_at
+      const { error } = await supabase
+        .from('trips')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', tripId);
+
+      if (error) {
+        console.error('Error deleting trip:', error);
+        throw error;
+      }
+
+      // Remove from state
+      set((state) => ({
+        trips: state.trips.filter((t) => t.id !== tripId),
+        currentTrip: state.currentTrip?.id === tripId ? null : state.currentTrip,
+      }));
+    } catch (error) {
+      console.error('Error deleting trip:', error);
+      throw error;
+    }
+  },
 
   // Activities state
   activities: [],

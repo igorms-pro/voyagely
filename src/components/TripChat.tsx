@@ -1,42 +1,152 @@
-import { useEffect, useState, useRef, FormEvent } from 'react';
+import { useEffect, useState, useRef, FormEvent, useCallback } from 'react';
 import { useStore } from '../lib/store';
-import { mockSupabase, Message } from '../lib/mock-supabase';
-import { Send, Loader2 } from 'lucide-react';
+import { Message } from '../lib/mock-supabase';
+import { supabase } from '../lib/supabase';
+import { Send, Loader2, Edit2, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
+import type { RealtimeChannel } from '@supabase/supabase-js';
+
+interface MessageWithProfile extends Message {
+  sender_name?: string;
+  sender_avatar?: string;
+}
 
 interface TripChatProps {
   tripId: string;
+  userRole?: 'owner' | 'editor' | 'viewer' | 'moderator' | null;
 }
 
-export default function TripChat({ tripId }: TripChatProps) {
+export default function TripChat({ tripId, userRole }: TripChatProps) {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
   const [messageText, setMessageText] = useState('');
+  const [messagesWithProfiles, setMessagesWithProfiles] = useState<MessageWithProfile[]>([]);
+  const [userProfiles, setUserProfiles] = useState<
+    Record<string, { name: string; avatar: string }>
+  >({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const user = useStore((state) => state.user);
   const messages = useStore((state) => state.messages);
   const setMessages = useStore((state) => state.setMessages);
   const addMessage = useStore((state) => state.addMessage);
 
-  useEffect(() => {
-    loadMessages();
-  }, [tripId]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const loadMessages = async () => {
+  const loadMessages = useCallback(async () => {
     try {
-      const tripMessages = await mockSupabase.getMessages(tripId);
-      setMessages(tripMessages);
+      setLoading(true);
+
+      // Load messages from Supabase
+      const { data: messagesData, error: messagesError } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('trip_id', tripId)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: true });
+
+      if (messagesError) {
+        console.error('Error loading messages:', messagesError);
+        throw messagesError;
+      }
+
+      // Map to Message format
+      const mappedMessages: Message[] = (messagesData || []).map((m) => ({
+        id: m.id,
+        trip_id: m.trip_id,
+        user_id: m.user_id || '',
+        content: m.content,
+        message_type: m.message_type,
+        created_at: m.created_at,
+      }));
+
+      setMessages(mappedMessages);
+
+      // Load user profiles for all message senders
+      const userIds = [...new Set(mappedMessages.map((m) => m.user_id).filter(Boolean))];
+      if (userIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, display_name, avatar_url')
+          .in('id', userIds);
+
+        if (!profilesError && profiles) {
+          const profilesMap: Record<string, { name: string; avatar: string }> = {};
+          profiles.forEach((profile) => {
+            profilesMap[profile.id] = {
+              name: profile.display_name || profile.id.substring(0, 8),
+              avatar:
+                profile.avatar_url ||
+                `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`,
+            };
+          });
+          setUserProfiles(profilesMap);
+
+          // Merge messages with profiles
+          const messagesWithProfilesData: MessageWithProfile[] = mappedMessages.map((msg) => ({
+            ...msg,
+            sender_name: msg.user_id ? profilesMap[msg.user_id]?.name : 'Unknown',
+            sender_avatar: msg.user_id ? profilesMap[msg.user_id]?.avatar : undefined,
+          }));
+          setMessagesWithProfiles(messagesWithProfilesData);
+        } else {
+          setMessagesWithProfiles(mappedMessages);
+        }
+      } else {
+        setMessagesWithProfiles(mappedMessages);
+      }
     } catch (error) {
       console.error('Error loading messages:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [tripId, setMessages]);
+
+  const setupRealtimeSubscription = useCallback(() => {
+    // Remove existing subscription if any
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+    }
+
+    // Create new channel for this trip's messages
+    const channel = supabase
+      .channel(`trip:${tripId}:messages`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'messages',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        async (payload) => {
+          // Reload messages when changes occur
+          await loadMessages();
+        },
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+  }, [tripId, loadMessages]);
+
+  // Load messages and user profiles
+  useEffect(() => {
+    loadMessages();
+    setupRealtimeSubscription();
+
+    return () => {
+      // Cleanup subscription on unmount
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, [tripId, loadMessages, setupRealtimeSubscription]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messagesWithProfiles]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -51,20 +161,113 @@ export default function TripChat({ tripId }: TripChatProps) {
     setMessageText('');
 
     try {
-      const message = await mockSupabase.sendMessage({
-        trip_id: tripId,
-        user_id: user.id,
-        content: text,
-        message_type: 'text',
-      });
+      const { data: message, error } = await supabase
+        .from('messages')
+        .insert({
+          trip_id: tripId,
+          user_id: user.id,
+          content: text,
+          message_type: 'text',
+        })
+        .select()
+        .single();
 
-      addMessage(message);
+      if (error) {
+        throw error;
+      }
+
+      if (message) {
+        const mappedMessage: Message = {
+          id: message.id,
+          trip_id: message.trip_id,
+          user_id: message.user_id || '',
+          content: message.content,
+          message_type: message.message_type,
+          created_at: message.created_at,
+        };
+        addMessage(mappedMessage);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       setMessageText(text); // Restore message on error
     } finally {
       setSending(false);
     }
+  };
+
+  const handleEdit = (message: MessageWithProfile) => {
+    setEditingMessageId(message.id);
+    setEditText(message.content);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditText('');
+  };
+
+  const handleSaveEdit = async (messageId: string) => {
+    if (!editText.trim() || !user) return;
+
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ content: editText, updated_at: new Date().toISOString() })
+        .eq('id', messageId)
+        .eq('user_id', user.id); // Ensure user can only edit their own messages
+
+      if (error) {
+        throw error;
+      }
+
+      // Update local state
+      const updatedMessages = messagesWithProfiles.map((msg) =>
+        msg.id === messageId ? { ...msg, content: editText } : msg,
+      );
+      setMessagesWithProfiles(updatedMessages);
+
+      setEditingMessageId(null);
+      setEditText('');
+    } catch (error) {
+      console.error('Error updating message:', error);
+      alert('Failed to update message. Please try again.');
+    }
+  };
+
+  const handleDelete = async (messageId: string) => {
+    if (!user) return;
+    if (!confirm('Are you sure you want to delete this message?')) return;
+
+    try {
+      // Check if user is moderator or owner
+      const canDeleteAny = userRole === 'moderator' || userRole === 'owner';
+
+      const { error } = await supabase
+        .from('messages')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', messageId)
+        .eq(canDeleteAny ? 'trip_id' : 'user_id', canDeleteAny ? tripId : user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Reload messages to reflect deletion
+      await loadMessages();
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      alert('Failed to delete message. Please try again.');
+    }
+  };
+
+  const canEditMessage = (message: MessageWithProfile): boolean => {
+    if (!user) return false;
+    return message.user_id === user.id;
+  };
+
+  const canDeleteMessage = (message: MessageWithProfile): boolean => {
+    if (!user) return false;
+    // Users can delete their own messages, moderators/owners can delete any
+    return message.user_id === user.id || userRole === 'moderator' || userRole === 'owner';
   };
 
   if (loading) {
@@ -77,7 +280,10 @@ export default function TripChat({ tripId }: TripChatProps) {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col" style={{ height: '600px' }}>
+    <div
+      className="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col"
+      style={{ height: '600px' }}
+    >
       {/* Chat Header */}
       <div className="px-6 py-4 border-b border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900">Trip Chat</h3>
@@ -86,44 +292,106 @@ export default function TripChat({ tripId }: TripChatProps) {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {messages.length === 0 ? (
+        {messagesWithProfiles.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500">No messages yet. Start the conversation!</p>
           </div>
         ) : (
-          messages.map((message) => {
+          messagesWithProfiles.map((message) => {
             const isOwnMessage = message.user_id === user?.id;
+            const isEditing = editingMessageId === message.id;
 
             return (
               <div
                 key={message.id}
-                className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} group`}
               >
                 <div className={`max-w-[70%] ${isOwnMessage ? 'order-2' : 'order-1'}`}>
                   {!isOwnMessage && (
                     <div className="flex items-center mb-1">
                       <img
-                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${message.user_id}`}
+                        src={
+                          message.sender_avatar ||
+                          `https://api.dicebear.com/7.x/avataaars/svg?seed=${message.user_id}`
+                        }
                         alt="Avatar"
                         className="w-6 h-6 rounded-full mr-2"
                       />
                       <span className="text-xs font-medium text-gray-600">
-                        {message.user_id === user?.id ? 'You' : 'Travel Companion'}
+                        {message.sender_name || 'Unknown'}
                       </span>
                     </div>
                   )}
-                  <div
-                    className={`rounded-2xl px-4 py-3 ${
-                      isOwnMessage
-                        ? 'bg-blue-600 text-white rounded-tr-sm'
-                        : 'bg-gray-100 text-gray-900 rounded-tl-sm'
-                    }`}
-                  >
-                    <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                  <div className="relative">
+                    {isEditing ? (
+                      <div className="bg-white border-2 border-blue-500 rounded-2xl p-3">
+                        <textarea
+                          value={editText}
+                          onChange={(e) => setEditText(e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                          rows={3}
+                          autoFocus
+                        />
+                        <div className="flex justify-end gap-2 mt-2">
+                          <button
+                            onClick={() => handleSaveEdit(message.id)}
+                            className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={handleCancelEdit}
+                            className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div
+                          className={`rounded-2xl px-4 py-3 ${
+                            isOwnMessage
+                              ? 'bg-blue-600 text-white rounded-tr-sm'
+                              : 'bg-gray-100 text-gray-900 rounded-tl-sm'
+                          }`}
+                        >
+                          <p className="text-sm whitespace-pre-wrap break-words">
+                            {message.content}
+                          </p>
+                        </div>
+                        <div
+                          className={`flex items-center gap-2 mt-1 ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <p className="text-xs text-gray-500">
+                            {format(new Date(message.created_at), 'h:mm a')}
+                          </p>
+                          {(canEditMessage(message) || canDeleteMessage(message)) && (
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                              {canEditMessage(message) && (
+                                <button
+                                  onClick={() => handleEdit(message)}
+                                  className="p-1 text-gray-400 hover:text-blue-600 transition"
+                                  title="Edit message"
+                                >
+                                  <Edit2 className="w-3 h-3" />
+                                </button>
+                              )}
+                              {canDeleteMessage(message) && (
+                                <button
+                                  onClick={() => handleDelete(message.id)}
+                                  className="p-1 text-gray-400 hover:text-red-600 transition"
+                                  title="Delete message"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
-                  <p className={`text-xs text-gray-500 mt-1 ${isOwnMessage ? 'text-right' : 'text-left'}`}>
-                    {format(new Date(message.created_at), 'h:mm a')}
-                  </p>
                 </div>
               </div>
             );
@@ -148,11 +416,7 @@ export default function TripChat({ tripId }: TripChatProps) {
             disabled={sending || !messageText.trim()}
             className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {sending ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Send className="w-5 h-5" />
-            )}
+            {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
           </button>
         </form>
       </div>

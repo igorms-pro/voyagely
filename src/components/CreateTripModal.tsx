@@ -1,9 +1,17 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../lib/store';
-import { mockSupabase } from '../lib/mock-supabase';
 import { generateItinerary, ItineraryRequest } from '../lib/openai-service';
-import { X, Sparkles, Loader2, Calendar, MapPin, Users, DollarSign } from 'lucide-react';
+import {
+  X,
+  Sparkles,
+  Loader2,
+  Calendar,
+  MapPin,
+  Users,
+  DollarSign,
+  AlertCircle,
+} from 'lucide-react';
 
 interface CreateTripModalProps {
   onClose: () => void;
@@ -12,10 +20,11 @@ interface CreateTripModalProps {
 export default function CreateTripModal({ onClose }: CreateTripModalProps) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const user = useStore((state) => state.user);
-  const addTrip = useStore((state) => state.addTrip);
+  const createTrip = useStore((state) => state.createTrip);
   const setCurrentTrip = useStore((state) => state.setCurrentTrip);
   const setActivities = useStore((state) => state.setActivities);
 
@@ -56,11 +65,11 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
     if (!user) return;
 
     setLoading(true);
+    setError(null);
 
     try {
-      // Create trip
-      const trip = await mockSupabase.createTrip({
-        owner_id: user.id,
+      // Create trip using Supabase
+      const trip = await createTrip({
         title: `${formData.destination} Adventure`,
         destination_text: formData.destination,
         start_date: formData.startDate,
@@ -70,7 +79,6 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
         currency: formData.currency,
       });
 
-      addTrip(trip);
       setCurrentTrip(trip);
 
       // Generate itinerary with AI
@@ -85,34 +93,16 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
         interests: formData.interests,
       };
 
-      const itinerary = await generateItinerary(request);
-
-      // Create activities from itinerary
-      const activityPromises = itinerary.days.flatMap((day) =>
-        day.activities.map((activity) =>
-          mockSupabase.createActivity({
-            trip_id: trip.id,
-            title: activity.title,
-            description: activity.description,
-            category: activity.category,
-            start_time: `${day.date}T${activity.startTime}:00`,
-            end_time: `${day.date}T${activity.endTime}:00`,
-            cost_cents: activity.estimatedCost * 100,
-            status: 'proposed',
-            source: 'ai',
-          })
-        )
-      );
-
-      const activities = await Promise.all(activityPromises);
-      setActivities(activities);
+      // Note: Activities creation will be handled in a future agent
+      // For now, just generate the itinerary (can be saved later)
+      await generateItinerary(request);
 
       // Navigate to trip page
       navigate(`/trip/${trip.id}`);
       onClose();
-    } catch (error) {
-      console.error('Error creating trip:', error);
-      alert('Failed to create trip. Please try again.');
+    } catch (err: any) {
+      console.error('Error creating trip:', err);
+      setError(err.message || 'Failed to create trip. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -127,13 +117,18 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
             <Sparkles className="w-6 h-6 text-blue-600 mr-2" />
             <h2 className="text-2xl font-bold text-gray-900">Create Trip with AI</h2>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition"
-          >
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
             <X className="w-6 h-6" />
           </button>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
+            <AlertCircle className="w-5 h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -169,9 +164,7 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                End Date
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
               <input
                 type="date"
                 value={formData.endDate}
