@@ -53,14 +53,14 @@ export const initializeSentry = () => {
   });
 };
 
-export const setSentryUser = (user: {
-  id?: string;
-  email?: string;
-  username?: string;
-}) => {
+export const setSentryUser = (user: { id?: string; email?: string; username?: string }) => {
+  const dsn = import.meta.env.VITE_SENTRY_DSN;
+  if (!dsn) return;
   Sentry.setUser(user);
 };
 
 export const clearSentryUser = () => {
+  const dsn = import.meta.env.VITE_SENTRY_DSN;
+  if (!dsn) return;
   Sentry.setUser(null);
 };

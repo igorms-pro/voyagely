@@ -19,26 +19,33 @@ function App() {
   const refreshUser = useStore((state) => state.refreshUser);
 
   useEffect(() => {
-    // Initialize auth on mount - check existing session and load profile
-    initializeAuth();
+    // Only initialize auth if Supabase is configured
+    // In CI/test environments without env vars, skip auth initialization
+    const hasSupabaseConfig =
+      import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-    // Set up auth state change listener
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        // User signed in or token refreshed, refresh user profile
-        await refreshUser();
-      } else if (event === 'SIGNED_OUT') {
-        // User signed out, refresh will clear the user state
-        await refreshUser();
-      }
-    });
+    if (hasSupabaseConfig) {
+      // Initialize auth on mount - check existing session and load profile
+      initializeAuth();
 
-    // Cleanup subscription on unmount
-    return () => {
-      subscription.unsubscribe();
-    };
+      // Set up auth state change listener
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          // User signed in or token refreshed, refresh user profile
+          await refreshUser();
+        } else if (event === 'SIGNED_OUT') {
+          // User signed out, refresh will clear the user state
+          await refreshUser();
+        }
+      });
+
+      // Cleanup subscription on unmount
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
   }, [initializeAuth, refreshUser]);
 
   return (

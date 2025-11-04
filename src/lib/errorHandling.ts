@@ -1,61 +1,79 @@
 import * as Sentry from '@sentry/react';
 
+// Check if Sentry is initialized
+const isSentryInitialized = () => {
+  return !!import.meta.env.VITE_SENTRY_DSN;
+};
+
 // Global error handling utilities for Sentry
 
 export const initializeErrorHandling = () => {
+  // Only set up error handlers if Sentry is initialized
+  if (!isSentryInitialized()) {
+    return;
+  }
+
   // Handle JavaScript errors
   window.addEventListener('error', (event) => {
-    Sentry.captureException(event.error || new Error(event.message), {
-      tags: {
-        errorType: 'javascript',
-        filename: event.filename,
-        lineno: event.lineno,
-        colno: event.colno,
-      },
-      contexts: {
-        error: {
-          message: event.message,
+    if (isSentryInitialized()) {
+      Sentry.captureException(event.error || new Error(event.message), {
+        tags: {
+          errorType: 'javascript',
           filename: event.filename,
           lineno: event.lineno,
           colno: event.colno,
         },
-      },
-    });
+        contexts: {
+          error: {
+            message: event.message,
+            filename: event.filename,
+            lineno: event.lineno,
+            colno: event.colno,
+          },
+        },
+      });
+    }
   });
 
   // Handle unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
-    Sentry.captureException(new Error(String(event.reason)), {
-      tags: {
-        errorType: 'unhandledrejection',
-      },
-      contexts: {
-        promise: {
-          reason: String(event.reason),
+    if (isSentryInitialized()) {
+      Sentry.captureException(new Error(String(event.reason)), {
+        tags: {
+          errorType: 'unhandledrejection',
         },
-      },
-    });
+        contexts: {
+          promise: {
+            reason: String(event.reason),
+          },
+        },
+      });
+    }
   });
 
   // Handle network errors
   window.addEventListener('offline', () => {
-    Sentry.captureMessage('User went offline', {
-      level: 'warning',
-      tags: {
-        errorType: 'network',
-        event: 'offline',
-      },
-    });
+    if (isSentryInitialized()) {
+      Sentry.captureMessage('User went offline', {
+        level: 'warning',
+        tags: {
+          errorType: 'network',
+          event: 'offline',
+        },
+      });
+    }
   });
 
   window.addEventListener('online', () => {
-    Sentry.captureMessage('User came back online', {
-      level: 'info',
-      tags: {
-        errorType: 'network',
-        event: 'online',
-      },
-    });
+    if (isSentryInitialized()) {
+      Sentry.captureMessage('User came back online', {
+        level: 'info',
+        tags: {
+          errorType: 'network',
+          event: 'online',
+        },
+      });
+    }
   });
 };
 
@@ -70,6 +88,7 @@ export const captureApiError = (
     requestData?: Record<string, string | number | boolean | null | undefined>;
   } = {},
 ) => {
+  if (!isSentryInitialized()) return;
   Sentry.captureException(typeof error === 'string' ? new Error(error) : error, {
     tags: {
       errorType: 'api',
@@ -93,6 +112,7 @@ export const captureUserAction = (
   action: string,
   details: Record<string, string | number | boolean | null | undefined> = {},
 ) => {
+  if (!isSentryInitialized()) return;
   Sentry.captureMessage(`User action: ${action}`, {
     level: 'info',
     tags: {
@@ -109,11 +129,8 @@ export const captureUserAction = (
 };
 
 // Utility function to set user context
-export const setUserContext = (user: {
-  id?: string;
-  email?: string;
-  username?: string;
-}) => {
+export const setUserContext = (user: { id?: string; email?: string; username?: string }) => {
+  if (!isSentryInitialized()) return;
   Sentry.setUser(user);
 };
 
@@ -123,6 +140,7 @@ export const addBreadcrumb = (
   category: string = 'default',
   data: Record<string, string | number | boolean | null | undefined> = {},
 ) => {
+  if (!isSentryInitialized()) return;
   Sentry.addBreadcrumb({
     message,
     category,

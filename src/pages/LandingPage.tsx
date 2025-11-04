@@ -40,6 +40,7 @@ export default function LandingPage() {
               <Link
                 to="/signup"
                 className="px-6 py-2 bg-white text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition"
+                data-testid="nav-cta-link"
               >
                 {t('auth.getStarted')}
               </Link>
@@ -61,6 +62,7 @@ export default function LandingPage() {
             <Link
               to="/signup"
               className="inline-flex items-center px-8 py-4 bg-white text-blue-600 rounded-xl font-bold text-lg hover:bg-blue-50 transition shadow-xl hover:shadow-2xl"
+              data-testid="hero-cta-link"
             >
               <Sparkles className="w-6 h-6 mr-2" />
               {t('landing.heroTitle')}
@@ -221,6 +223,7 @@ export default function LandingPage() {
           <Link
             to="/signup"
             className="inline-flex items-center px-8 py-4 bg-white text-blue-600 rounded-xl font-bold text-lg hover:bg-blue-50 transition shadow-xl hover:shadow-2xl"
+            data-testid="footer-cta-link"
           >
             <Sparkles className="w-6 h-6 mr-2" />
             Get Started Free

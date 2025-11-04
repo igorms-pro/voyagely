@@ -84,6 +84,14 @@ export const useStore = create<AppState>((set, get) => ({
   // Auth functions
   initializeAuth: async () => {
     try {
+      // Skip if Supabase is not configured (e.g., in CI/test environments)
+      const hasSupabaseConfig =
+        import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
+      if (!hasSupabaseConfig) {
+        set({ user: null });
+        return;
+      }
+
       // Check for existing session
       const {
         data: { session },
