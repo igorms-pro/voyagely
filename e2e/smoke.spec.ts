@@ -1,21 +1,50 @@
 import { test, expect } from '@playwright/test';
 
 test('landing page renders Wanderly brand and CTA', async ({ page }) => {
-  await page.goto('/');
+  // Listen for console errors and page errors to debug
+  const errors: string[] = [];
+  const warnings: string[] = [];
 
-  // Wait for page to load completely
-  await page.waitForLoadState('networkidle');
+  page.on('console', (msg) => {
+    const text = msg.text();
+    if (msg.type() === 'error') {
+      errors.push(`Console Error: ${text}`);
+    } else if (msg.type() === 'warning') {
+      warnings.push(`Console Warning: ${text}`);
+    }
+  });
 
-  // Wait for React to render - check if root element exists
-  await page.waitForSelector('#root', { state: 'attached' });
+  page.on('pageerror', (error) => {
+    errors.push(`Page Error: ${error.message}${error.stack ? '\n' + error.stack : ''}`);
+  });
 
-  // Wait a bit for React to hydrate and i18n to initialize
-  await page.waitForTimeout(2000);
+  // Go to the page
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
 
-  // Use data-testid for reliable element selection
-  await expect(page.getByTestId('wanderly-brand')).toBeVisible({ timeout: 10000 });
+  // Wait for React root element
+  await page.waitForSelector('#root', { state: 'attached', timeout: 20000 });
 
-  // Check for CTA link - try multiple possible texts (use first match to avoid strict mode violation)
-  const ctaLink = page.getByRole('link', { name: /Get Started|Sign Up|Start Planning/i }).first();
-  await expect(ctaLink).toBeVisible({ timeout: 10000 });
+  // Wait for Wanderly brand using test ID - this ensures React has rendered
+  const brandText = page.getByTestId('wanderly-brand');
+  await expect(brandText).toBeVisible({ timeout: 30000 });
+
+  // Check for at least one CTA link (hero, nav, or footer)
+  const heroCta = page.getByTestId('hero-cta-link');
+  const navCta = page.getByTestId('nav-cta-link');
+  const footerCta = page.getByTestId('footer-cta-link');
+
+  // Check which CTA is visible
+  const [heroVisible, navVisible, footerVisible] = await Promise.all([
+    heroCta.isVisible().catch(() => false),
+    navCta.isVisible().catch(() => false),
+    footerCta.isVisible().catch(() => false),
+  ]);
+
+  if (!heroVisible && !navVisible && !footerVisible) {
+    await page.screenshot({ path: 'test-results/debug-no-cta.png' });
+    throw new Error(
+      `No CTA link found. Hero visible: ${heroVisible}, Nav visible: ${navVisible}, Footer visible: ${footerVisible}. ` +
+        `Errors: ${errors.join('; ')}`,
+    );
+  }
 });

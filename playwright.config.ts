@@ -16,6 +16,8 @@ export default defineConfig({
     port: 5173,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    stdout: 'pipe',
+    stderr: 'pipe',
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },

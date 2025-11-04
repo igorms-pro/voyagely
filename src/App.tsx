@@ -4,9 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { PostHogProvider } from './contexts/PostHogContext';
 import { useStore } from './lib/store';
-import { mockSupabase } from './lib/mock-supabase';
-import { setSentryUser, clearSentryUser } from './lib/sentry';
-import { Analytics } from './lib/analytics';
+import { supabase } from './lib/supabase';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
@@ -17,36 +15,38 @@ const queryClient = new QueryClient();
 
 function App() {
   const user = useStore((state) => state.user);
-  const setUser = useStore((state) => state.setUser);
+  const initializeAuth = useStore((state) => state.initializeAuth);
+  const refreshUser = useStore((state) => state.refreshUser);
 
   useEffect(() => {
-    // Check if user is already logged in
-    const currentUser = mockSupabase.getCurrentUser();
-    if (currentUser) {
-      setUser(currentUser);
-      // Set user context for Sentry and PostHog
-      setSentryUser({
-        id: currentUser.id,
-        email: currentUser.email,
-        username: currentUser.display_name,
-      });
-      Analytics.identify(currentUser.id, {
-        email: currentUser.email,
-        displayName: currentUser.display_name,
-      });
-    } else {
-      clearSentryUser();
-    }
+    // Only initialize auth if Supabase is configured
+    // In CI/test environments without env vars, skip auth initialization
+    const hasSupabaseConfig =
+      import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-    // Create demo user if not exists
-    const users = JSON.parse(localStorage.getItem('wanderly_users') || '[]');
-    if (users.length === 0) {
-      // Create demo user
-      mockSupabase.signUp('demo@wanderly.com', 'demo123', 'Demo User').catch(() => {
-        // User might already exist
+    if (hasSupabaseConfig) {
+      // Initialize auth on mount - check existing session and load profile
+      initializeAuth();
+
+      // Set up auth state change listener
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          // User signed in or token refreshed, refresh user profile
+          await refreshUser();
+        } else if (event === 'SIGNED_OUT') {
+          // User signed out, refresh will clear the user state
+          await refreshUser();
+        }
       });
+
+      // Cleanup subscription on unmount
+      return () => {
+        subscription.unsubscribe();
+      };
     }
-  }, [setUser]);
+  }, [initializeAuth, refreshUser]);
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
