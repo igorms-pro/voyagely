@@ -76,7 +76,7 @@ export default function DashboardPage() {
 
       if (!countsError && memberCounts) {
         const counts: Record<string, number> = {};
-        memberCounts.forEach((m) => {
+        ((memberCounts || []) as any[]).forEach((m: any) => {
           counts[m.trip_id] = (counts[m.trip_id] || 0) + 1;
         });
         setTripMemberCounts(counts);
