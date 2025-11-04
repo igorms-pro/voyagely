@@ -1,59 +1,49 @@
-import { useState, FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { useState, FormEvent, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useStore } from '../lib/store';
-import { Plane } from 'lucide-react';
+import { Plane, CheckCircle2 } from 'lucide-react';
 import { setSentryUser } from '../lib/sentry';
 import { Analytics } from '../lib/analytics';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // Default fake credentials
+  const [email, setEmail] = useState('demo@wanderly.com');
+  const [password, setPassword] = useState('demo123');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const location = useLocation();
   const setUser = useStore((state) => state.setUser);
   const navigate = useNavigate();
+
+  // Check for success message from signup redirect
+  useEffect(() => {
+    if (location.state && (location.state as any).message) {
+      setSuccessMessage((location.state as any).message);
+      // Clear the message from location state
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
+    // Simulate network delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
     try {
-      // Sign in with Supabase
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (authError) {
-        throw authError;
-      }
-
-      if (!authData.user) {
-        throw new Error('No user returned from sign in');
-      }
-
-      // Get profile from profiles table
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', authData.user.id)
-        .single();
-
-      if (profileError) {
-        throw profileError;
-      }
-
-      // Map profile to User format expected by store
+      // Fake authentication - no API calls
+      // Create a fake user object
+      const fakeUserId = 'demo-user-' + Date.now();
       const user = {
-        id: profile.id,
-        email: profile.email,
-        display_name: profile.display_name || profile.email.split('@')[0],
-        avatar_url:
-          profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.email}`,
-        created_at: profile.created_at,
+        id: fakeUserId,
+        email: email,
+        display_name: email.split('@')[0],
+        avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
+        created_at: new Date().toISOString(),
       };
 
       setUser(user);
@@ -93,6 +83,13 @@ export default function LoginPage() {
         {/* Login Form */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Sign In</h2>
+
+          {successMessage && (
+            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm flex items-start">
+              <CheckCircle2 className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
+              <span>{successMessage}</span>
+            </div>
+          )}
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
@@ -147,14 +144,6 @@ export default function LoginPage() {
                 Sign Up
               </Link>
             </p>
-          </div>
-
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm font-medium text-blue-900 mb-2">Demo Credentials:</p>
-            <p className="text-sm text-blue-700">Email: demo@wanderly.com</p>
-            <p className="text-sm text-blue-700">Password: demo123</p>
-            <p className="text-xs text-blue-600 mt-2">Or create a new account to try it out!</p>
           </div>
         </div>
       </div>

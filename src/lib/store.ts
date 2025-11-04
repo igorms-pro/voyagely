@@ -1,6 +1,6 @@
 // Global state management using Zustand
 import { create } from 'zustand';
-import { User, Trip, Activity, Message } from './mock-supabase';
+import { User, Trip, Activity, Message, Vote } from './mock-supabase';
 import { supabase } from './supabase';
 import { Profile } from './types/database.types';
 import { setSentryUser, clearSentryUser } from './sentry';
@@ -55,6 +55,33 @@ interface AppState {
   setActivities: (activities: Activity[]) => void;
   addActivity: (activity: Activity) => void;
   updateActivityInState: (activityId: string, updates: Partial<Activity>) => void;
+
+  // Activity CRUD operations
+  loadActivities: (tripId: string) => Promise<void>;
+  createActivity: (activityData: {
+    trip_id: string;
+    itinerary_day_id?: string;
+    title: string;
+    description?: string;
+    category?: string;
+    start_time?: string;
+    end_time?: string;
+    cost_cents?: number;
+    currency?: string;
+    lat?: number;
+    lon?: number;
+    status?: 'proposed' | 'confirmed' | 'rejected';
+    source?: 'manual' | 'ai' | 'import';
+  }) => Promise<Activity>;
+  updateActivity: (activityId: string, updates: Partial<Activity>) => Promise<void>;
+
+  // Votes state
+  votes: Record<string, Vote[]>;
+  setVotes: (votes: Record<string, Vote[]>) => void;
+
+  // Votes CRUD operations
+  loadVotes: (activityIds: string[]) => Promise<void>;
+  createOrUpdateVote: (activityId: string, choice: 'up' | 'down') => Promise<void>;
 
   // Messages state
   messages: Message[];
@@ -167,11 +194,12 @@ export const useStore = create<AppState>((set, get) => ({
       // Clear analytics tracking
       clearSentryUser();
 
-      // Clear trips, activities, messages state
+      // Clear trips, activities, votes, messages state
       set({
         trips: [],
         currentTrip: null,
         activities: [],
+        votes: {},
         messages: [],
       });
     } catch (error) {
@@ -277,7 +305,7 @@ export const useStore = create<AppState>((set, get) => ({
         return;
       }
 
-      const tripIds = memberships.map((m) => m.trip_id);
+      const tripIds = (memberships as any[]).map((m: any) => m.trip_id);
 
       // Fetch trips that are not deleted
       const { data: trips, error: tripsError } = await supabase
@@ -293,7 +321,7 @@ export const useStore = create<AppState>((set, get) => ({
       }
 
       // Map database Trip to mock Trip format
-      const mappedTrips: Trip[] = (trips || []).map((trip) => ({
+      const mappedTrips: Trip[] = ((trips || []) as any[]).map((trip: any) => ({
         id: trip.id,
         owner_id: trip.owner_id,
         title: trip.title,
@@ -334,7 +362,7 @@ export const useStore = create<AppState>((set, get) => ({
           status: tripData.status || 'planned',
           budget_cents: tripData.budget_cents ?? null,
           currency: tripData.currency ?? null,
-        })
+        } as any)
         .select()
         .single();
 
@@ -348,18 +376,19 @@ export const useStore = create<AppState>((set, get) => ({
       }
 
       // Map database Trip to mock Trip format
+      const tripFromDb = trip as any;
       const mappedTrip: Trip = {
-        id: trip.id,
-        owner_id: trip.owner_id,
-        title: trip.title,
-        destination_text: trip.destination_text,
-        start_date: trip.start_date,
-        end_date: trip.end_date,
-        status: trip.status,
-        budget_cents: trip.budget_cents ?? undefined,
-        currency: trip.currency ?? undefined,
-        created_at: trip.created_at,
-        updated_at: trip.updated_at,
+        id: tripFromDb.id,
+        owner_id: tripFromDb.owner_id,
+        title: tripFromDb.title,
+        destination_text: tripFromDb.destination_text,
+        start_date: tripFromDb.start_date,
+        end_date: tripFromDb.end_date,
+        status: tripFromDb.status,
+        budget_cents: tripFromDb.budget_cents ?? undefined,
+        currency: tripFromDb.currency ?? undefined,
+        created_at: tripFromDb.created_at,
+        updated_at: tripFromDb.updated_at,
       };
 
       // Add to state (owner is automatically added as member via trigger)
@@ -387,7 +416,8 @@ export const useStore = create<AppState>((set, get) => ({
 
       const { data: trip, error } = await supabase
         .from('trips')
-        .update(updateData)
+        // @ts-expect-error - Supabase type inference issue
+        .update(updateData as any)
         .eq('id', tripId)
         .select()
         .single();
@@ -402,18 +432,19 @@ export const useStore = create<AppState>((set, get) => ({
       }
 
       // Map database Trip to mock Trip format
+      const tripData = trip as any;
       const mappedTrip: Trip = {
-        id: trip.id,
-        owner_id: trip.owner_id,
-        title: trip.title,
-        destination_text: trip.destination_text,
-        start_date: trip.start_date,
-        end_date: trip.end_date,
-        status: trip.status,
-        budget_cents: trip.budget_cents ?? undefined,
-        currency: trip.currency ?? undefined,
-        created_at: trip.created_at,
-        updated_at: trip.updated_at,
+        id: tripData.id,
+        owner_id: tripData.owner_id,
+        title: tripData.title,
+        destination_text: tripData.destination_text,
+        start_date: tripData.start_date,
+        end_date: tripData.end_date,
+        status: tripData.status,
+        budget_cents: tripData.budget_cents ?? undefined,
+        currency: tripData.currency ?? undefined,
+        created_at: tripData.created_at,
+        updated_at: tripData.updated_at,
       };
 
       // Update state
@@ -429,7 +460,8 @@ export const useStore = create<AppState>((set, get) => ({
       // Soft delete by setting deleted_at
       const { error } = await supabase
         .from('trips')
-        .update({ deleted_at: new Date().toISOString() })
+        // @ts-expect-error - Supabase type inference issue
+        .update({ deleted_at: new Date().toISOString() } as any)
         .eq('id', tripId);
 
       if (error) {
@@ -456,6 +488,322 @@ export const useStore = create<AppState>((set, get) => ({
     set((state) => ({
       activities: state.activities.map((a) => (a.id === activityId ? { ...a, ...updates } : a)),
     })),
+
+  // Activity CRUD operations
+  loadActivities: async (tripId) => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        set({ activities: [] });
+        return;
+      }
+
+      // Load activities for this trip that are not deleted
+      const { data: activities, error } = await supabase
+        .from('activities')
+        .select('*')
+        .eq('trip_id', tripId)
+        .is('deleted_at', null)
+        .order('start_time', { ascending: true, nullsFirst: false })
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error loading activities:', error);
+        throw error;
+      }
+
+      // Map database Activity to mock Activity format
+      const mappedActivities: Activity[] = ((activities || []) as any[]).map((activity: any) => ({
+        id: activity.id,
+        trip_id: activity.trip_id,
+        itinerary_day_id: activity.itinerary_day_id || undefined,
+        title: activity.title,
+        description: activity.description || '',
+        category: activity.category || '',
+        start_time: activity.start_time || undefined,
+        end_time: activity.end_time || undefined,
+        cost_cents: activity.cost_cents ?? undefined,
+        lat: activity.lat ?? undefined,
+        lon: activity.lon ?? undefined,
+        status: activity.status,
+        source: activity.source,
+        created_at: activity.created_at,
+      }));
+
+      set({ activities: mappedActivities });
+    } catch (error) {
+      console.error('Error loading activities:', error);
+      throw error;
+    }
+  },
+
+  createActivity: async (activityData) => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const { data: activity, error } = await supabase
+        .from('activities')
+        .insert({
+          trip_id: activityData.trip_id,
+          itinerary_day_id: activityData.itinerary_day_id || null,
+          title: activityData.title,
+          description: activityData.description || null,
+          category: activityData.category || null,
+          start_time: activityData.start_time || null,
+          end_time: activityData.end_time || null,
+          cost_cents: activityData.cost_cents ?? null,
+          currency: activityData.currency || 'USD',
+          lat: activityData.lat ?? null,
+          lon: activityData.lon ?? null,
+          status: activityData.status || 'proposed',
+          source: activityData.source || 'manual',
+        } as any)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating activity:', error);
+        throw error;
+      }
+
+      if (!activity) {
+        throw new Error('Failed to create activity');
+      }
+
+      // Map database Activity to mock Activity format
+      const activityDataFromDb = activity as any;
+      const mappedActivity: Activity = {
+        id: activityDataFromDb.id,
+        trip_id: activityDataFromDb.trip_id,
+        itinerary_day_id: activityDataFromDb.itinerary_day_id || undefined,
+        title: activityDataFromDb.title,
+        description: activityDataFromDb.description || '',
+        category: activityDataFromDb.category || '',
+        start_time: activityDataFromDb.start_time || undefined,
+        end_time: activityDataFromDb.end_time || undefined,
+        cost_cents: activityDataFromDb.cost_cents ?? undefined,
+        lat: activityDataFromDb.lat ?? undefined,
+        lon: activityDataFromDb.lon ?? undefined,
+        status: activityDataFromDb.status,
+        source: activityDataFromDb.source,
+        created_at: activityDataFromDb.created_at,
+      };
+
+      // Add to state
+      set((state) => ({ activities: [...state.activities, mappedActivity] }));
+
+      return mappedActivity;
+    } catch (error) {
+      console.error('Error creating activity:', error);
+      throw error;
+    }
+  },
+
+  updateActivity: async (activityId, updates) => {
+    try {
+      const updateData: any = {};
+      if (updates.title !== undefined) updateData.title = updates.title;
+      if (updates.description !== undefined) updateData.description = updates.description || null;
+      if (updates.category !== undefined) updateData.category = updates.category || null;
+      if (updates.start_time !== undefined) updateData.start_time = updates.start_time || null;
+      if (updates.end_time !== undefined) updateData.end_time = updates.end_time || null;
+      if (updates.cost_cents !== undefined) updateData.cost_cents = updates.cost_cents ?? null;
+      if (updates.status !== undefined) updateData.status = updates.status;
+      if (updates.lat !== undefined) updateData.lat = updates.lat ?? null;
+      if (updates.lon !== undefined) updateData.lon = updates.lon ?? null;
+
+      const { data: activity, error } = await supabase
+        .from('activities')
+        // @ts-expect-error - Supabase type inference issue
+        .update(updateData as any)
+        .eq('id', activityId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating activity:', error);
+        throw error;
+      }
+
+      if (!activity) {
+        throw new Error('Activity not found');
+      }
+
+      // Map database Activity to mock Activity format
+      const activityData = activity as any;
+      const mappedActivity: Activity = {
+        id: activityData.id,
+        trip_id: activityData.trip_id,
+        itinerary_day_id: activityData.itinerary_day_id || undefined,
+        title: activityData.title,
+        description: activityData.description || '',
+        category: activityData.category || '',
+        start_time: activityData.start_time || undefined,
+        end_time: activityData.end_time || undefined,
+        cost_cents: activityData.cost_cents ?? undefined,
+        lat: activityData.lat ?? undefined,
+        lon: activityData.lon ?? undefined,
+        status: activityData.status,
+        source: activityData.source,
+        created_at: activityData.created_at,
+      };
+
+      // Update state
+      get().updateActivityInState(activityId, mappedActivity);
+    } catch (error) {
+      console.error('Error updating activity:', error);
+      throw error;
+    }
+  },
+
+  // Votes state
+  votes: {},
+  setVotes: (votes) => set({ votes }),
+
+  // Votes CRUD operations
+  loadVotes: async (activityIds) => {
+    try {
+      if (activityIds.length === 0) {
+        set({ votes: {} });
+        return;
+      }
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        set({ votes: {} });
+        return;
+      }
+
+      // Load votes for the specified activities
+      const { data: votesData, error: votesError } = await supabase
+        .from('votes')
+        .select('*')
+        .in('activity_id', activityIds);
+
+      if (votesError) {
+        console.error('Error loading votes:', votesError);
+        throw votesError;
+      }
+
+      // Group votes by activity_id
+      const votesByActivity: Record<string, Vote[]> = {};
+      ((votesData || []) as any[]).forEach((vote: any) => {
+        if (!votesByActivity[vote.activity_id]) {
+          votesByActivity[vote.activity_id] = [];
+        }
+        // Map database Vote to app Vote format
+        const mappedVote: Vote = {
+          id: vote.id,
+          activity_id: vote.activity_id,
+          user_id: vote.user_id,
+          choice: vote.choice,
+          created_at: vote.created_at,
+        };
+        votesByActivity[vote.activity_id].push(mappedVote);
+      });
+
+      // Merge with existing votes (don't overwrite, merge)
+      set((state) => ({
+        votes: { ...state.votes, ...votesByActivity },
+      }));
+    } catch (error) {
+      console.error('Error loading votes:', error);
+      throw error;
+    }
+  },
+
+  createOrUpdateVote: async (activityId, choice) => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Check if vote already exists
+      const { data: existingVote } = await supabase
+        .from('votes')
+        .select('*')
+        .eq('activity_id', activityId)
+        .eq('user_id', user.id)
+        .single();
+
+      let vote;
+      let error;
+
+      if (existingVote) {
+        // Update existing vote
+        const existingVoteData = existingVote as any;
+        const { data: updatedVote, error: updateError } = await supabase
+          .from('votes')
+          // @ts-expect-error - Supabase type inference issue
+          .update({ choice: choice } as any)
+          .eq('id', existingVoteData.id)
+          .select()
+          .single();
+        vote = updatedVote;
+        error = updateError;
+      } else {
+        // Insert new vote
+        const { data: newVote, error: insertError } = await supabase
+          .from('votes')
+          .insert({
+            activity_id: activityId,
+            user_id: user.id,
+            choice: choice,
+          } as any)
+          .select()
+          .single();
+        vote = newVote;
+        error = insertError;
+      }
+
+      if (error) {
+        console.error('Error creating/updating vote:', error);
+        throw error;
+      }
+
+      if (!vote) {
+        throw new Error('Failed to create/update vote');
+      }
+
+      // Map database Vote to app Vote format
+      const mappedVote: Vote = {
+        id: vote.id,
+        activity_id: vote.activity_id,
+        user_id: vote.user_id,
+        choice: vote.choice,
+        created_at: vote.created_at,
+      };
+
+      // Update state
+      set((state) => {
+        const activityVotes = state.votes[activityId] || [];
+        // Remove existing vote from this user for this activity
+        const filteredVotes = activityVotes.filter((v) => v.user_id !== user.id);
+        // Add the new/updated vote
+        return {
+          votes: {
+            ...state.votes,
+            [activityId]: [...filteredVotes, mappedVote],
+          },
+        };
+      });
+    } catch (error) {
+      console.error('Error creating/updating vote:', error);
+      throw error;
+    }
+  },
 
   // Messages state
   messages: [],
