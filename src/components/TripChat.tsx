@@ -210,9 +210,9 @@ export default function TripChat({ tripId, userRole }: TripChatProps) {
     if (!editText.trim() || !user) return;
 
     try {
-      // @ts-expect-error - Supabase type inference issue
       const { error } = await supabase
         .from('messages')
+        // @ts-expect-error - Supabase type inference issue
         .update({ content: editText, updated_at: new Date().toISOString() } as any)
         .eq('id', messageId)
         .eq('user_id', user.id); // Ensure user can only edit their own messages
@@ -243,9 +243,9 @@ export default function TripChat({ tripId, userRole }: TripChatProps) {
       // Check if user is moderator or owner
       const canDeleteAny = userRole === 'moderator' || userRole === 'owner';
 
-      // @ts-expect-error - Supabase type inference issue
       const { error } = await supabase
         .from('messages')
+        // @ts-expect-error - Supabase type inference issue
         .update({ deleted_at: new Date().toISOString() } as any)
         .eq('id', messageId)
         .eq(canDeleteAny ? 'trip_id' : 'user_id', canDeleteAny ? tripId : user.id);
