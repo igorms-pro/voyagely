@@ -1,15 +1,17 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { mockSupabase } from '../lib/mock-supabase';
+import { supabase } from '../lib/supabase';
 import { useStore } from '../lib/store';
 import { Plane } from 'lucide-react';
+import { setSentryUser } from '../lib/sentry';
+import { Analytics } from '../lib/analytics';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const setUser = useStore((state) => state.setUser);
   const navigate = useNavigate();
 
@@ -19,8 +21,55 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const user = await mockSupabase.signIn(email, password);
+      // Sign in with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) {
+        throw authError;
+      }
+
+      if (!authData.user) {
+        throw new Error('No user returned from sign in');
+      }
+
+      // Get profile from profiles table
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      // Map profile to User format expected by store
+      const user = {
+        id: profile.id,
+        email: profile.email,
+        display_name: profile.display_name || profile.email.split('@')[0],
+        avatar_url:
+          profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.email}`,
+        created_at: profile.created_at,
+      };
+
       setUser(user);
+
+      // Set user context for Sentry and PostHog
+      setSentryUser({
+        id: user.id,
+        email: user.email,
+        username: user.display_name,
+      });
+
+      Analytics.identify(user.id, {
+        email: user.email,
+        displayName: user.display_name,
+      });
+
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Failed to sign in');
@@ -44,7 +93,7 @@ export default function LoginPage() {
         {/* Login Form */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Sign In</h2>
-          
+
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
               {error}
