@@ -2,9 +2,7 @@ import { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useStore } from '../lib/store';
-import { Plane } from 'lucide-react';
-import { setSentryUser } from '../lib/sentry';
-import { Analytics } from '../lib/analytics';
+import { Plane, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -12,46 +10,127 @@ export default function SignupPage() {
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState<string>('');
+  const [success, setSuccess] = useState(false);
 
-  const setUser = useStore((state) => state.setUser);
+  const refreshUser = useStore((state) => state.refreshUser);
   const navigate = useNavigate();
+
+  // Validate email format
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Validate password strength
+  const validatePassword = (password: string): { valid: boolean; message: string } => {
+    if (password.length < 6) {
+      return { valid: false, message: 'Password must be at least 6 characters' };
+    }
+    if (password.length > 72) {
+      return { valid: false, message: 'Password must be less than 72 characters' };
+    }
+    return { valid: true, message: '' };
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess(false);
     setLoading(true);
+    setLoadingStep('');
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    // Validate display name
+    if (!displayName.trim()) {
+      setError('Display name is required');
+      setLoading(false);
+      return;
+    }
+
+    if (displayName.trim().length < 2) {
+      setError('Display name must be at least 2 characters');
+      setLoading(false);
+      return;
+    }
+
+    // Validate email
+    if (!validateEmail(email)) {
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
+    // Validate password
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      setError(passwordValidation.message);
       setLoading(false);
       return;
     }
 
     try {
+      setLoadingStep('Creating your account...');
+
       // Sign up with Supabase (profile will be created by trigger)
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
+        email: email.trim(),
         password,
         options: {
           data: {
-            display_name: displayName,
+            display_name: displayName.trim(),
           },
+          emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       });
 
       if (authError) {
+        // Handle specific Supabase errors
+        if (authError.message.includes('already registered')) {
+          throw new Error('An account with this email already exists. Please sign in instead.');
+        }
+        if (authError.message.includes('Invalid email')) {
+          throw new Error('Please enter a valid email address');
+        }
+        if (authError.message.includes('Password')) {
+          throw new Error('Password does not meet requirements');
+        }
         throw authError;
       }
 
       if (!authData.user) {
-        throw new Error('No user returned from sign up');
+        throw new Error('No user returned from sign up. Please try again.');
       }
 
+      // Check if email confirmation is required
+      if (authData.user && !authData.session) {
+        // Email confirmation is required
+        setSuccess(true);
+        setLoadingStep('Please check your email to confirm your account');
+        setLoading(false);
+
+        // Show success message and redirect to login after a delay
+        setTimeout(() => {
+          navigate('/login', {
+            state: {
+              message:
+                'Account created! Please check your email to confirm your account before signing in.',
+            },
+          });
+        }, 3000);
+        return;
+      }
+
+      // If we have a session, proceed with profile creation check
+      setLoadingStep('Setting up your profile...');
+
       // Get profile from profiles table (created by trigger)
-      // We may need to wait a bit for the trigger to complete
+      // The trigger should execute immediately, but we'll retry with exponential backoff
       let profile = null;
       let retries = 0;
-      while (!profile && retries < 5) {
+      const maxRetries = 10;
+      const baseDelay = 100; // Start with 100ms
+
+      while (!profile && retries < maxRetries) {
         const { data, error: profileError } = await supabase
           .from('profiles')
           .select('*')
@@ -63,42 +142,75 @@ export default function SignupPage() {
           break;
         }
 
-        // Wait a bit before retrying
-        await new Promise((resolve) => setTimeout(resolve, 200));
+        // Log profile error for debugging (but don't fail immediately)
+        if (profileError && retries === 0) {
+          console.warn('Profile not immediately available, retrying...', profileError);
+        }
+
+        // Exponential backoff: 100ms, 200ms, 400ms, 800ms, etc.
+        const delay = baseDelay * Math.pow(2, retries);
+        await new Promise((resolve) => setTimeout(resolve, delay));
         retries++;
       }
 
       if (!profile) {
-        throw new Error('Profile not created. Please try signing in.');
+        // Profile creation failed - this should not happen if trigger is working
+        console.error('Profile not created after retries');
+
+        // Try to refresh user from store (which will check profile)
+        setLoadingStep('Finalizing setup...');
+        await refreshUser();
+
+        // Check if user is now set
+        const { user } = useStore.getState();
+        if (!user) {
+          throw new Error(
+            'Profile creation is taking longer than expected. Please try signing in - your account may have been created successfully.',
+          );
+        }
+
+        // User is set, proceed to dashboard
+        setSuccess(true);
+        setLoadingStep('Welcome! Redirecting...');
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1000);
+        return;
       }
 
-      // Map profile to User format expected by store
-      const user = {
-        id: profile.id,
-        email: profile.email,
-        display_name: profile.display_name || profile.email.split('@')[0],
-        avatar_url:
-          profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.email}`,
-        created_at: profile.created_at,
-      };
+      // Profile exists, refresh user from store to ensure consistency
+      setLoadingStep('Finalizing setup...');
+      await refreshUser();
 
-      setUser(user);
+      // Verify user is set
+      const { user } = useStore.getState();
+      if (!user) {
+        throw new Error('Failed to load user profile. Please try signing in.');
+      }
 
-      // Set user context for Sentry and PostHog
-      setSentryUser({
-        id: user.id,
-        email: user.email,
-        username: user.display_name,
-      });
+      setSuccess(true);
+      setLoadingStep('Welcome! Redirecting...');
 
-      Analytics.identify(user.id, {
-        email: user.email,
-        displayName: user.display_name,
-      });
-
-      navigate('/dashboard');
+      // Navigate to dashboard after a brief delay to show success
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1000);
     } catch (err: any) {
-      setError(err.message || 'Failed to create account');
+      console.error('Signup error:', err);
+
+      // Provide user-friendly error messages
+      let errorMessage = 'Failed to create account';
+
+      if (err.message) {
+        errorMessage = err.message;
+      } else if (err.error_description) {
+        errorMessage = err.error_description;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+
+      setError(errorMessage);
+      setLoadingStep('');
     } finally {
       setLoading(false);
     }
@@ -121,8 +233,23 @@ export default function SignupPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Create Account</h2>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {error}
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-start">
+              <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {success && (
+            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm flex items-start">
+              <CheckCircle2 className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
+              <span>{loadingStep || 'Account created successfully!'}</span>
+            </div>
+          )}
+
+          {loading && loadingStep && (
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm flex items-center">
+              <Loader2 className="w-5 h-5 mr-2 animate-spin flex-shrink-0" />
+              <span>{loadingStep}</span>
             </div>
           )}
 
@@ -135,9 +262,14 @@ export default function SignupPage() {
                 id="displayName"
                 type="text"
                 value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                onChange={(e) => {
+                  setDisplayName(e.target.value);
+                  setError(''); // Clear error when user types
+                }}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                disabled={loading || success}
+                minLength={2}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:opacity-50 disabled:bg-gray-50"
                 placeholder="Your name"
               />
             </div>
@@ -150,9 +282,13 @@ export default function SignupPage() {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError(''); // Clear error when user types
+                }}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                disabled={loading || success}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:opacity-50 disabled:bg-gray-50"
                 placeholder="you@example.com"
               />
             </div>
@@ -165,19 +301,46 @@ export default function SignupPage() {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError(''); // Clear error when user types
+                }}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                disabled={loading || success}
+                minLength={6}
+                maxLength={72}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:opacity-50 disabled:bg-gray-50"
                 placeholder="At least 6 characters"
               />
+              {password && (
+                <p className="mt-1 text-xs text-gray-500">
+                  {password.length < 6
+                    ? `${6 - password.length} more characters needed`
+                    : password.length > 72
+                      ? 'Password is too long'
+                      : 'Password looks good'}
+                </p>
+              )}
             </div>
 
             <button
               type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading || success}
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
-              {loading ? 'Creating account...' : 'Create Account'}
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Creating account...
+                </>
+              ) : success ? (
+                <>
+                  <CheckCircle2 className="w-5 h-5 mr-2" />
+                  Account Created!
+                </>
+              ) : (
+                'Create Account'
+              )}
             </button>
           </form>
 

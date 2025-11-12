@@ -104,13 +104,64 @@
 **Notes:**
 
 - Project is now a fully configured template with all foundational tooling
-- Ready for feature development (Phase 0: Foundation)
+- Ready for feature development (Issue #2: Foundation)
 - All developer experience tools in place
 - CI/CD pipeline active and ready
 
 ---
 
-## 🎯 Phase 0: Foundation (MVP Core)
+## 🎯 Issue #1: Activities & Votes CRUD Implementation
+
+**Status:** 🔴 **NOT STARTED**  
+**Priority:** HIGH  
+**Branch:** `2-activities-votes-crud`  
+**Assigned:** TBD  
+**Created:** 2025-01-XX
+
+### Description
+
+Implement full CRUD operations for activities and votes, connecting the frontend to Supabase. Currently, activities and votes are not loaded from the database - they're set to empty arrays/objects in `TripDetailPage`. This issue implements the complete data layer for these features.
+
+### Current State
+
+- ✅ Database schema exists (`activities` and `votes` tables)
+- ✅ RLS policies configured and tested
+- ✅ Real-time subscriptions set up for activities
+- ✅ TypeScript types generated (`database.types.ts`)
+- ❌ Activities not loaded from Supabase
+- ❌ Votes not loaded from Supabase
+- ❌ No store functions for activities/votes CRUD
+- ❌ No UI for creating activities
+- ❌ No UI for voting on activities
+
+### Requirements
+
+See "Next Sprint: Activities & Votes CRUD" section above for detailed task breakdown.
+
+### Acceptance Criteria
+
+- [ ] Activities load from Supabase when trip page loads
+- [ ] Users can create new activities via UI
+- [ ] Users can update/delete activities
+- [ ] Votes load from Supabase for all activities
+- [ ] Users can vote (upvote/downvote) on activities
+- [ ] Vote counts display correctly on activity cards
+- [ ] Real-time updates work for activities and votes
+- [ ] All operations handle errors gracefully
+- [ ] Unit tests for all CRUD functions
+- [ ] E2E tests for key user flows
+
+### Technical Notes
+
+- Activities use soft deletes (`deleted_at` column)
+- Votes use UNIQUE constraint on `(activity_id, user_id)` for upsert behavior
+- Real-time subscriptions already configured in `realtime-service.ts`
+- Store functions should follow the same pattern as `loadTrips`, `createTrip`, etc.
+- Need to map database types to app types (similar to Trip mapping in TripDetailPage)
+
+---
+
+## 🎯 Issue #2: Foundation (MVP Core)
 
 ### Authentication & User Management
 
@@ -193,7 +244,7 @@
 
 ---
 
-## 🤖 Phase 1: AI Itinerary Generation
+## 🤖 Issue #3: AI Itinerary Generation
 
 ### AI Integration
 
@@ -234,7 +285,7 @@
 
 ---
 
-## 👥 Phase 2: Collaboration Features
+## 👥 Issue #4: Collaboration Features
 
 ### Voting System
 
@@ -282,7 +333,7 @@
 
 ---
 
-## 🎨 Phase 3: UX/UI Enhancements
+## 🎨 Issue #5: UX/UI Enhancements
 
 ### Design System
 
@@ -328,7 +379,7 @@
 
 ---
 
-## 🔌 Phase 4: Integrations
+## 🔌 Issue #6: Integrations
 
 ### External APIs
 
@@ -352,7 +403,7 @@
 
 ---
 
-## 📊 Phase 5: Analytics & Monitoring
+## 📊 Issue #7: Analytics & Monitoring
 
 ### Analytics
 
@@ -377,7 +428,7 @@
 
 ---
 
-## 💰 Phase 6: Monetization (If Applicable)
+## 💰 Issue #8: Monetization (If Applicable)
 
 ### Pricing Tiers
 
@@ -398,7 +449,7 @@
 
 ---
 
-## 🔒 Phase 7: Security & Compliance
+## 🔒 Issue #9: Security & Compliance
 
 ### Security
 
@@ -430,7 +481,7 @@
 
 ---
 
-## 🚀 Phase 8: Production & Deployment
+## 🚀 Issue #10: Production & Deployment
 
 ### Infrastructure
 
@@ -465,7 +516,7 @@
 
 ---
 
-## 🧪 Phase 9: Testing & Quality
+## 🧪 Issue #11: Testing & Quality
 
 ### Testing
 
@@ -496,7 +547,7 @@
 
 ---
 
-## 📱 Phase 10: Mobile Apps (Future)
+## 📱 Issue #12: Mobile Apps (Future)
 
 ### Native Apps (Optional)
 
@@ -517,6 +568,7 @@
 - [x] 🟢 Implement basic trip CRUD operations
 - [x] 🟢 Realtime setup (migration 003)
 - [x] 🟢 Realtime service implementation
+- [x] 🟢 Fix E2E tests for CI/CD (add data-testid, improve env var handling)
 
 ### Completed ✅
 
@@ -538,13 +590,81 @@
 - [x] 🟢 Trip dashboard with filters, search, sorting
 - [x] 🟢 Realtime service setup (trips, messages, activities subscriptions)
 - [x] 🟢 Real-time chat implementation (messages load/send)
+- [x] 🟢 E2E tests fixed and passing (data-testid attributes, CI resilience)
 
-### Next Week
+### Next Sprint: Activities & Votes CRUD
 
-- [ ] 🔴 Activities CRUD (load from Supabase, create activities)
-- [ ] 🔴 Votes CRUD (load from Supabase, create/update votes)
+**Priority:** HIGH  
+**Status:** 🔴 Not Started  
+**Branch:** `2-activities-votes-crud`
+
+#### Activities CRUD
+
+- [ ] 🔴 Add `loadActivities(tripId)` function to store
+  - Load activities from Supabase for a trip
+  - Filter by `deleted_at IS NULL`
+  - Map database Activity type to app Activity type
+  - Handle errors gracefully
+- [ ] 🔴 Add `createActivity(activityData)` function to store
+  - Create activity in Supabase
+  - Validate required fields (trip_id, title)
+  - Set default status to 'proposed'
+  - Set default source to 'manual'
+  - Update local state optimistically
+- [ ] 🔴 Add `updateActivity(activityId, updates)` function to store
+  - Update activity in Supabase
+  - Handle soft delete (set deleted_at)
+  - Update local state
+- [ ] 🔴 Update `TripDetailPage` to load activities on mount
+  - Call `loadActivities(tripId)` in `loadTripData`
+  - Display activities in itinerary view
+  - Handle loading and error states
+- [ ] 🔴 Add UI for creating activities
+  - "Add Activity" button/modal
+  - Activity form (title, description, category, time, cost)
+  - Submit handler that calls `createActivity`
+
+#### Votes CRUD
+
+- [ ] 🔴 Add `loadVotes(activityIds)` function to store
+  - Load votes from Supabase for multiple activities
+  - Group votes by activity_id
+  - Return Record<activityId, Vote[]>
+- [ ] 🔴 Add `createOrUpdateVote(activityId, choice)` function to store
+  - Upsert vote in Supabase (use UNIQUE constraint on activity_id + user_id)
+  - Generate idempotency_key
+  - Handle vote change (up → down or down → up)
+  - Update local state optimistically
+- [ ] 🔴 Update `TripDetailPage` to load votes on mount
+  - Call `loadVotes()` after activities are loaded
+  - Pass activity IDs to load votes
+  - Display vote counts on activity cards
+- [ ] 🔴 Add voting UI
+  - Upvote/downvote buttons on activity cards
+  - Show current user's vote state (highlighted)
+  - Show vote counts (upvotes - downvotes)
+  - Handle vote click → call `createOrUpdateVote`
+
+#### Real-time Integration
+
+- [ ] 🔴 Connect real-time subscriptions to store updates
+  - Activities real-time subscription already set up, but needs to call store functions
+  - Votes real-time subscription (needs to be added to realtime-service.ts)
+  - Update store when real-time events occur
+
+#### Testing
+
+- [ ] 🔴 Unit tests for activities CRUD functions
+- [ ] 🔴 Unit tests for votes CRUD functions
+- [ ] 🔴 E2E test for creating an activity
+- [ ] 🔴 E2E test for voting on an activity
+
+### Backlog (Future Sprints)
+
+- [ ] 🔴 UI initialization and testing (manual app review)
 - [ ] 🔴 AI itinerary generation MVP
 - [ ] 🔴 Member invitations system
+- [ ] 🔴 Activity status management (proposed → confirmed/rejected)
 
 ---
 
@@ -601,8 +721,20 @@ _External dependencies or blockers will be noted here_
 
 ---
 
-**Last Updated:** 2025-01-XX
+**Last Updated:** 2025-01-XX  
 **Next Review:** Weekly
+
+---
+
+## 📝 Recent Updates
+
+### 2025-01-XX - E2E Tests Fixed
+
+- ✅ Added `data-testid` attributes to landing page elements
+- ✅ Made app resilient to missing environment variables (Supabase, PostHog, Sentry)
+- ✅ Simplified E2E test logic to use test IDs
+- ✅ All E2E tests now passing in local and CI
+- ✅ Improved error handling for missing env vars in CI/test environments
 
 ---
 
@@ -611,15 +743,16 @@ _External dependencies or blockers will be noted here_
 ### Overall Progress
 
 - **Project Initialization**: 🟢 100% - ✅ COMPLETE (All tooling, i18n, theme, tests, CI/CD)
-- Phase 0 (Foundation): 🟡 65% - Supabase setup complete, auth working, trip CRUD done, realtime ready, needs activities/votes
-- Phase 1 (AI): 🔴 0% - Not started
-- Phase 2 (Collaboration): 🔴 0% - Not started
-- Phase 3 (UX/UI): 🟡 30% - Basic UI + i18n + theme + monitoring
-- Phase 4 (Integrations): 🔴 0% - Not started
-- Phase 5 (Analytics): 🟢 100% - Sentry & PostHog integrated
-- Phase 6 (Monetization): 🔴 0% - Not started
-- Phase 7 (Security): 🟡 20% - RLS policies implemented, needs audit
-- Phase 8 (Production): 🟡 50% - CI/CD complete, needs deployment config
-- Phase 9 (Testing): 🟢 80% - Full test infrastructure, needs coverage
+- Issue #1 (Activities & Votes CRUD): 🔴 0% - Not started (functions exist but need real-time votes subscription + tests)
+- Issue #2 (Foundation): 🟡 70% - Supabase setup complete, auth working, trip CRUD done, realtime ready, E2E tests fixed, needs activities/votes CRUD
+- Issue #3 (AI): 🔴 0% - Not started
+- Issue #4 (Collaboration): 🔴 0% - Not started
+- Issue #5 (UX/UI): 🟡 30% - Basic UI + i18n + theme + monitoring
+- Issue #6 (Integrations): 🔴 0% - Not started
+- Issue #7 (Analytics): 🟢 100% - Sentry & PostHog integrated
+- Issue #8 (Monetization): 🔴 0% - Not started
+- Issue #9 (Security): 🟡 20% - RLS policies implemented, needs audit
+- Issue #10 (Production): 🟡 50% - CI/CD complete, needs deployment config
+- Issue #11 (Testing): 🟢 80% - Full test infrastructure, needs coverage
 
-**Overall SaaS Completion: ~30%** (Infrastructure + Auth + Database + Trip CRUD + Realtime complete, activities/votes pending)
+**Overall SaaS Completion: ~32%** (Infrastructure + Auth + Database + Trip CRUD + Realtime + E2E tests complete, activities/votes CRUD pending)

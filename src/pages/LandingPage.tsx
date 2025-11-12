@@ -9,13 +9,13 @@ import {
   MapPin,
   ThumbsUp,
   ArrowRight,
-  Check,
 } from 'lucide-react';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { ThemeToggle } from '../components/ThemeToggle';
 
 export default function LandingPage() {
   const { t } = useTranslation();
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Hero Section */}
@@ -36,13 +36,6 @@ export default function LandingPage() {
               <ThemeToggle />
               <Link to="/login" className="text-white hover:text-blue-100 font-medium transition">
                 {t('auth.signIn')}
-              </Link>
-              <Link
-                to="/signup"
-                className="px-6 py-2 bg-white text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition"
-                data-testid="nav-cta-link"
-              >
-                {t('auth.getStarted')}
               </Link>
             </div>
           </div>
@@ -65,7 +58,7 @@ export default function LandingPage() {
               data-testid="hero-cta-link"
             >
               <Sparkles className="w-6 h-6 mr-2" />
-              {t('landing.heroTitle')}
+              Get Started
               <ArrowRight className="w-6 h-6 ml-2" />
             </Link>
           </div>
@@ -210,25 +203,6 @@ export default function LandingPage() {
               </p>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* CTA Section */}
-      <div className="py-24 bg-gradient-to-br from-blue-600 to-purple-700">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold text-white mb-6">Ready to Start Your Journey?</h2>
-          <p className="text-xl text-blue-100 mb-8">
-            Join thousands of travelers planning amazing trips with Wanderly
-          </p>
-          <Link
-            to="/signup"
-            className="inline-flex items-center px-8 py-4 bg-white text-blue-600 rounded-xl font-bold text-lg hover:bg-blue-50 transition shadow-xl hover:shadow-2xl"
-            data-testid="footer-cta-link"
-          >
-            <Sparkles className="w-6 h-6 mr-2" />
-            Get Started Free
-            <ArrowRight className="w-6 h-6 ml-2" />
-          </Link>
         </div>
       </div>
 

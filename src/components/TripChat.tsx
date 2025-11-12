@@ -73,7 +73,7 @@ export default function TripChat({ tripId, userRole }: TripChatProps) {
 
         if (!profilesError && profiles) {
           const profilesMap: Record<string, { name: string; avatar: string }> = {};
-          profiles.forEach((profile) => {
+          ((profiles || []) as any[]).forEach((profile: any) => {
             profilesMap[profile.id] = {
               name: profile.display_name || profile.id.substring(0, 8),
               avatar:
@@ -168,7 +168,7 @@ export default function TripChat({ tripId, userRole }: TripChatProps) {
           user_id: user.id,
           content: text,
           message_type: 'text',
-        })
+        } as any)
         .select()
         .single();
 
@@ -177,13 +177,14 @@ export default function TripChat({ tripId, userRole }: TripChatProps) {
       }
 
       if (message) {
+        const messageData = message as any;
         const mappedMessage: Message = {
-          id: message.id,
-          trip_id: message.trip_id,
-          user_id: message.user_id || '',
-          content: message.content,
-          message_type: message.message_type,
-          created_at: message.created_at,
+          id: messageData.id,
+          trip_id: messageData.trip_id,
+          user_id: messageData.user_id || '',
+          content: messageData.content,
+          message_type: messageData.message_type,
+          created_at: messageData.created_at,
         };
         addMessage(mappedMessage);
       }
@@ -211,7 +212,8 @@ export default function TripChat({ tripId, userRole }: TripChatProps) {
     try {
       const { error } = await supabase
         .from('messages')
-        .update({ content: editText, updated_at: new Date().toISOString() })
+        // @ts-expect-error - Supabase type inference issue
+        .update({ content: editText, updated_at: new Date().toISOString() } as any)
         .eq('id', messageId)
         .eq('user_id', user.id); // Ensure user can only edit their own messages
 
@@ -243,7 +245,8 @@ export default function TripChat({ tripId, userRole }: TripChatProps) {
 
       const { error } = await supabase
         .from('messages')
-        .update({ deleted_at: new Date().toISOString() })
+        // @ts-expect-error - Supabase type inference issue
+        .update({ deleted_at: new Date().toISOString() } as any)
         .eq('id', messageId)
         .eq(canDeleteAny ? 'trip_id' : 'user_id', canDeleteAny ? tripId : user.id);
 

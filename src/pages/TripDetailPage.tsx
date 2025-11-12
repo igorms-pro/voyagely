@@ -36,6 +36,7 @@ import { format } from 'date-fns';
 import TripChat from '../components/TripChat';
 import WeatherWidget from '../components/WeatherWidget';
 import NearbyPlaces from '../components/NearbyPlaces';
+import CreateActivityModal from '../components/CreateActivityModal';
 
 export default function TripDetailPage() {
   const { tripId } = useParams<{ tripId: string }>();
@@ -45,7 +46,6 @@ export default function TripDetailPage() {
   const [activeTab, setActiveTab] = useState<'itinerary' | 'chat' | 'weather' | 'explore'>(
     'itinerary',
   );
-  const [votes, setVotes] = useState<Record<string, Vote[]>>({});
   const [tripMembers, setTripMembers] = useState<TripMember[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -68,7 +68,12 @@ export default function TripDetailPage() {
   const updateTrip = useStore((state) => state.updateTrip);
   const deleteTrip = useStore((state) => state.deleteTrip);
   const activities = useStore((state) => state.activities);
-  const setActivities = useStore((state) => state.setActivities);
+  const loadActivities = useStore((state) => state.loadActivities);
+  const votes = useStore((state) => state.votes);
+  const loadVotes = useStore((state) => state.loadVotes);
+  const createOrUpdateVote = useStore((state) => state.createOrUpdateVote);
+  const showAddActivityModal = useStore((state) => state.showAddActivityModal);
+  const setShowAddActivityModal = useStore((state) => state.setShowAddActivityModal);
 
   const loadTripData = useCallback(async () => {
     if (!tripId || !user) return;
@@ -96,18 +101,19 @@ export default function TripDetailPage() {
       }
 
       // Map database Trip to mock Trip format
+      const tripData = trip as any; // Type assertion needed due to Supabase type inference
       const mappedTrip: Trip = {
-        id: trip.id,
-        owner_id: trip.owner_id,
-        title: trip.title,
-        destination_text: trip.destination_text,
-        start_date: trip.start_date,
-        end_date: trip.end_date,
-        status: trip.status,
-        budget_cents: trip.budget_cents ?? undefined,
-        currency: trip.currency ?? undefined,
-        created_at: trip.created_at,
-        updated_at: trip.updated_at,
+        id: tripData.id,
+        owner_id: tripData.owner_id,
+        title: tripData.title,
+        destination_text: tripData.destination_text,
+        start_date: tripData.start_date,
+        end_date: tripData.end_date,
+        status: tripData.status,
+        budget_cents: tripData.budget_cents ?? undefined,
+        currency: tripData.currency ?? undefined,
+        created_at: tripData.created_at,
+        updated_at: tripData.updated_at,
       };
 
       setCurrentTrip(mappedTrip);
@@ -132,17 +138,22 @@ export default function TripDetailPage() {
         setTripMembers(members || []);
       }
 
-      // Note: Activities and votes will be loaded by future agents
-      // For now, keep existing mock data loading for activities
-      setActivities([]);
-      setVotes({});
+      // Load activities for this trip
+      await loadActivities(tripId);
+
+      // Load votes for all activities after activities are loaded
+      const { activities: currentActivities } = useStore.getState();
+      if (currentActivities.length > 0) {
+        const activityIds = currentActivities.map((a) => a.id);
+        await loadVotes(activityIds);
+      }
     } catch (err: any) {
       console.error('Error loading trip:', err);
       setError(err.message || 'Failed to load trip. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [tripId, user, navigate, setCurrentTrip, setActivities]);
+  }, [tripId, user, navigate, setCurrentTrip, loadActivities, loadVotes]);
 
   useEffect(() => {
     if (!user) {
@@ -166,18 +177,19 @@ export default function TripDetailPage() {
     tripSubscriptionRef.current = subscribeToTrip(tripId, (payload: RealtimePayload) => {
       if (payload.eventType === 'UPDATE' && payload.new) {
         // Update trip in state
+        const updatedTripData = payload.new as any;
         const updatedTrip: Trip = {
-          id: payload.new.id,
-          owner_id: payload.new.owner_id,
-          title: payload.new.title,
-          destination_text: payload.new.destination_text,
-          start_date: payload.new.start_date,
-          end_date: payload.new.end_date,
-          status: payload.new.status,
-          budget_cents: payload.new.budget_cents ?? undefined,
-          currency: payload.new.currency ?? undefined,
-          created_at: payload.new.created_at,
-          updated_at: payload.new.updated_at,
+          id: updatedTripData.id,
+          owner_id: updatedTripData.owner_id,
+          title: updatedTripData.title,
+          destination_text: updatedTripData.destination_text,
+          start_date: updatedTripData.start_date,
+          end_date: updatedTripData.end_date,
+          status: updatedTripData.status,
+          budget_cents: updatedTripData.budget_cents ?? undefined,
+          currency: updatedTripData.currency ?? undefined,
+          created_at: updatedTripData.created_at,
+          updated_at: updatedTripData.updated_at,
         };
         setCurrentTrip(updatedTrip);
         updateTrip(tripId, updatedTrip);
@@ -235,8 +247,11 @@ export default function TripDetailPage() {
             source: activity.source,
             created_at: activity.created_at,
           };
-          const { activities: currentActivities } = useStore.getState();
-          setActivities([...currentActivities, mappedActivity]);
+          const { activities: currentActivities, setActivities: updateActivities } =
+            useStore.getState();
+          updateActivities([...currentActivities, mappedActivity]);
+          // Load votes for the new activity
+          loadVotes([mappedActivity.id]);
         } else if (payload.eventType === 'UPDATE' && payload.new) {
           const activity = payload.new as any;
           const mappedActivity: Activity = {
@@ -255,12 +270,16 @@ export default function TripDetailPage() {
             source: activity.source,
             created_at: activity.created_at,
           };
-          const { activities: currentActivities } = useStore.getState();
-          setActivities(currentActivities.map((a) => (a.id === activity.id ? mappedActivity : a)));
+          const { activities: currentActivities, setActivities: updateActivities } =
+            useStore.getState();
+          updateActivities(
+            currentActivities.map((a) => (a.id === activity.id ? mappedActivity : a)),
+          );
         } else if (payload.eventType === 'DELETE' && payload.old) {
           // Remove activity from state
-          const { activities: currentActivities } = useStore.getState();
-          setActivities(currentActivities.filter((a) => a.id !== payload.old?.id));
+          const { activities: currentActivities, setActivities: updateActivities } =
+            useStore.getState();
+          updateActivities(currentActivities.filter((a) => a.id !== payload.old?.id));
         }
       },
     );
@@ -280,7 +299,7 @@ export default function TripDetailPage() {
         activitiesSubscriptionRef.current = null;
       }
     };
-  }, [tripId, user, navigate, setCurrentTrip, updateTrip, setActivities]);
+  }, [tripId, user, navigate, setCurrentTrip, updateTrip, loadVotes]);
 
   const handleUpdateTrip = async () => {
     if (!tripId || !currentTrip) return;
@@ -340,9 +359,12 @@ export default function TripDetailPage() {
   const handleVote = async (activityId: string, choice: 'up' | 'down') => {
     if (!user) return;
 
-    // Note: Voting will be implemented by a future agent
-    // For now, this is a placeholder
-    console.log('Vote functionality will be implemented by future agent');
+    try {
+      await createOrUpdateVote(activityId, choice);
+    } catch (err: any) {
+      console.error('Error voting:', err);
+      alert(err.message || 'Failed to vote. Please try again.');
+    }
   };
 
   const getVoteCounts = (activityId: string) => {
@@ -360,10 +382,19 @@ export default function TripDetailPage() {
   };
 
   // Group activities by date
+  // Note: Since database uses TIME not TIMESTAMP, we group by created_at date
+  // In the future, we may want to add a date field or use itinerary_day_id
   const activitiesByDate = activities.reduce(
     (acc, activity) => {
-      if (!activity.start_time) return acc;
-      const date = activity.start_time.split('T')[0];
+      // Try to extract date from start_time if it's a full timestamp
+      // Otherwise use created_at date
+      let date: string;
+      if (activity.start_time && activity.start_time.includes('T')) {
+        date = activity.start_time.split('T')[0];
+      } else {
+        // Use created_at date for grouping
+        date = activity.created_at.split('T')[0];
+      }
       if (!acc[date]) {
         acc[date] = [];
       }
@@ -607,9 +638,31 @@ export default function TripDetailPage() {
           <NearbyPlaces destination={currentTrip.destination_text} />
         ) : activeTab === 'itinerary' ? (
           <div className="space-y-8">
+            {/* Add Activity Button */}
+            {canEdit() && (
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowAddActivityModal(true)}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition flex items-center shadow-sm"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Add Activity
+                </button>
+              </div>
+            )}
+
             {sortedDates.length === 0 ? (
               <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
-                <p className="text-gray-600">No activities in this itinerary yet.</p>
+                <p className="text-gray-600 mb-4">No activities in this itinerary yet.</p>
+                {canEdit() && (
+                  <button
+                    onClick={() => setShowAddActivityModal(true)}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition inline-flex items-center"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Add Your First Activity
+                  </button>
+                )}
               </div>
             ) : (
               sortedDates.map((date) => (
@@ -653,8 +706,32 @@ export default function TripDetailPage() {
                                   {activity.start_time && activity.end_time && (
                                     <div className="flex items-center">
                                       <Clock className="w-4 h-4 mr-1" />
-                                      {format(new Date(activity.start_time), 'h:mm a')} -{' '}
-                                      {format(new Date(activity.end_time), 'h:mm a')}
+                                      {(() => {
+                                        // Handle both TIME format (HH:MM:SS) and TIMESTAMP format
+                                        const startTime = activity.start_time.includes('T')
+                                          ? activity.start_time
+                                          : `2000-01-01T${activity.start_time}`;
+                                        const endTime = activity.end_time.includes('T')
+                                          ? activity.end_time
+                                          : `2000-01-01T${activity.end_time}`;
+                                        return (
+                                          <>
+                                            {format(new Date(startTime), 'h:mm a')} -{' '}
+                                            {format(new Date(endTime), 'h:mm a')}
+                                          </>
+                                        );
+                                      })()}
+                                    </div>
+                                  )}
+                                  {activity.start_time && !activity.end_time && (
+                                    <div className="flex items-center">
+                                      <Clock className="w-4 h-4 mr-1" />
+                                      {(() => {
+                                        const startTime = activity.start_time.includes('T')
+                                          ? activity.start_time
+                                          : `2000-01-01T${activity.start_time}`;
+                                        return format(new Date(startTime), 'h:mm a');
+                                      })()}
                                     </div>
                                   )}
                                   {activity.cost_cents !== undefined && (
@@ -711,6 +788,11 @@ export default function TripDetailPage() {
           <TripChat tripId={tripId!} userRole={getUserRole()} />
         )}
       </main>
+
+      {/* Create Activity Modal */}
+      {showAddActivityModal && tripId && (
+        <CreateActivityModal tripId={tripId} onClose={() => setShowAddActivityModal(false)} />
+      )}
     </div>
   );
 }
