@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '../lib/store';
 import { supabase } from '../lib/supabase';
 import { Activity, Vote, Trip, Message } from '../lib/mock-supabase';
@@ -39,6 +40,7 @@ import NearbyPlaces from '../components/NearbyPlaces';
 import CreateActivityModal from '../components/CreateActivityModal';
 
 export default function TripDetailPage() {
+  const { t } = useTranslation();
   const { tripId } = useParams<{ tripId: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -149,11 +151,11 @@ export default function TripDetailPage() {
       }
     } catch (err: any) {
       console.error('Error loading trip:', err);
-      setError(err.message || 'Failed to load trip. Please try again.');
+      setError(err.message || t('errors.failedToLoadTrip'));
     } finally {
       setLoading(false);
     }
-  }, [tripId, user, navigate, setCurrentTrip, loadActivities, loadVotes]);
+  }, [tripId, user, navigate, setCurrentTrip, loadActivities, loadVotes, t]);
 
   useEffect(() => {
     if (!user) {
@@ -317,14 +319,14 @@ export default function TripDetailPage() {
       await loadTripData();
     } catch (err: any) {
       console.error('Error updating trip:', err);
-      alert(err.message || 'Failed to update trip. Please try again.');
+      alert(err.message || t('errors.failedToUpdateTrip'));
     }
   };
 
   const handleDeleteTrip = async () => {
     if (!tripId || !currentTrip) return;
 
-    if (!confirm('Are you sure you want to delete this trip? This action cannot be undone.')) {
+    if (!confirm(t('tripDetail.confirmDelete'))) {
       return;
     }
 
@@ -334,7 +336,7 @@ export default function TripDetailPage() {
       navigate('/dashboard');
     } catch (err: any) {
       console.error('Error deleting trip:', err);
-      alert(err.message || 'Failed to delete trip. Please try again.');
+      alert(err.message || t('errors.failedToDeleteTrip'));
       setIsDeleting(false);
     }
   };
@@ -363,7 +365,7 @@ export default function TripDetailPage() {
       await createOrUpdateVote(activityId, choice);
     } catch (err: any) {
       console.error('Error voting:', err);
-      alert(err.message || 'Failed to vote. Please try again.');
+      alert(err.message || t('errors.failedToVote'));
     }
   };
 
@@ -411,7 +413,7 @@ export default function TripDetailPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Loading trip...</p>
+          <p className="mt-4 text-gray-600">{t('tripDetail.loadingTrip')}</p>
         </div>
       </div>
     );
@@ -424,20 +426,22 @@ export default function TripDetailPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
             <AlertCircle className="w-8 h-8 text-red-600" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Error Loading Trip</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            {t('tripDetail.errorLoadingTrip')}
+          </h3>
           <p className="text-gray-600 mb-6">{error}</p>
           <div className="flex space-x-3 justify-center">
             <button
               onClick={() => navigate('/dashboard')}
               className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition"
             >
-              Back to Dashboard
+              {t('tripDetail.backToDashboard')}
             </button>
             <button
               onClick={loadTripData}
               className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition"
             >
-              Try Again
+              {t('trip.tryAgain')}
             </button>
           </div>
         </div>
@@ -460,7 +464,7 @@ export default function TripDetailPage() {
               className="flex items-center text-gray-600 hover:text-gray-900 transition"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
-              Back to Dashboard
+              {t('tripDetail.backToDashboard')}
             </button>
           </div>
         </div>
@@ -478,14 +482,14 @@ export default function TripDetailPage() {
                     value={editForm.title}
                     onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                     className="w-full px-4 py-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white"
-                    placeholder="Trip title"
+                    placeholder={t('tripDetail.tripTitlePlaceholder')}
                   />
                   <input
                     type="text"
                     value={editForm.destination_text}
                     onChange={(e) => setEditForm({ ...editForm, destination_text: e.target.value })}
                     className="w-full px-4 py-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white"
-                    placeholder="Destination"
+                    placeholder={t('tripDetail.destinationPlaceholder')}
                   />
                   <div className="grid grid-cols-2 gap-4">
                     <input
@@ -507,7 +511,7 @@ export default function TripDetailPage() {
                       className="px-4 py-2 bg-white text-blue-600 rounded-lg font-medium hover:bg-gray-100 transition flex items-center"
                     >
                       <Save className="w-4 h-4 mr-2" />
-                      Save
+                      {t('tripDetail.save')}
                     </button>
                     <button
                       onClick={() => {
@@ -523,7 +527,7 @@ export default function TripDetailPage() {
                       className="px-4 py-2 bg-white/20 text-white rounded-lg font-medium hover:bg-white/30 transition flex items-center"
                     >
                       <X className="w-4 h-4 mr-2" />
-                      Cancel
+                      {t('tripDetail.cancel')}
                     </button>
                   </div>
                 </div>
@@ -542,7 +546,8 @@ export default function TripDetailPage() {
                     </div>
                     <div className="flex items-center">
                       <Users className="w-5 h-5 mr-2" />
-                      {tripMembers.length} member{tripMembers.length !== 1 ? 's' : ''}
+                      {tripMembers.length}{' '}
+                      {tripMembers.length === 1 ? t('tripDetail.member') : t('tripDetail.members')}
                     </div>
                   </div>
                 </>
@@ -556,7 +561,7 @@ export default function TripDetailPage() {
                     className="px-4 py-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg text-white hover:bg-white/30 transition flex items-center"
                   >
                     <Edit className="w-4 h-4 mr-2" />
-                    Edit
+                    {t('tripDetail.edit')}
                   </button>
                 )}
                 {canDelete() && (
@@ -566,7 +571,7 @@ export default function TripDetailPage() {
                     className="px-4 py-2 bg-red-500/80 backdrop-blur-sm border border-red-400/30 rounded-lg text-white hover:bg-red-600/80 transition flex items-center disabled:opacity-50"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
-                    {isDeleting ? 'Deleting...' : 'Delete'}
+                    {isDeleting ? t('tripDetail.deleting') : t('tripDetail.delete')}
                   </button>
                 )}
               </div>
@@ -587,7 +592,7 @@ export default function TripDetailPage() {
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              Itinerary
+              {t('tripDetail.itinerary')}
             </button>
             <button
               onClick={() => setActiveTab('weather')}
@@ -598,7 +603,7 @@ export default function TripDetailPage() {
               }`}
             >
               <Cloud className="w-4 h-4 inline mr-2" />
-              Weather
+              {t('tripDetail.weather')}
             </button>
             <button
               onClick={() => setActiveTab('explore')}
@@ -609,7 +614,7 @@ export default function TripDetailPage() {
               }`}
             >
               <NavigationIcon className="w-4 h-4 inline mr-2" />
-              Explore
+              {t('tripDetail.explore')}
             </button>
             <button
               onClick={() => setActiveTab('chat')}
@@ -620,7 +625,7 @@ export default function TripDetailPage() {
               }`}
             >
               <MessageSquare className="w-4 h-4 inline mr-2" />
-              Chat
+              {t('tripDetail.chat')}
             </button>
           </div>
         </div>
@@ -646,21 +651,21 @@ export default function TripDetailPage() {
                   className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition flex items-center shadow-sm"
                 >
                   <Plus className="w-5 h-5 mr-2" />
-                  Add Activity
+                  {t('tripDetail.addActivity')}
                 </button>
               </div>
             )}
 
             {sortedDates.length === 0 ? (
               <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
-                <p className="text-gray-600 mb-4">No activities in this itinerary yet.</p>
+                <p className="text-gray-600 mb-4">{t('tripDetail.noActivitiesYet')}</p>
                 {canEdit() && (
                   <button
                     onClick={() => setShowAddActivityModal(true)}
                     className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition inline-flex items-center"
                   >
                     <Plus className="w-5 h-5 mr-2" />
-                    Add Your First Activity
+                    {t('tripDetail.addFirstActivity')}
                   </button>
                 )}
               </div>
@@ -673,7 +678,7 @@ export default function TripDetailPage() {
                       {format(new Date(date), 'EEEE, MMMM d, yyyy')}
                     </h3>
                     <p className="text-sm text-gray-600 mt-1">
-                      {activitiesByDate[date].length} activities
+                      {activitiesByDate[date].length} {t('tripDetail.activities')}
                     </p>
                   </div>
 
@@ -737,13 +742,14 @@ export default function TripDetailPage() {
                                   {activity.cost_cents !== undefined && (
                                     <div className="flex items-center">
                                       <DollarSign className="w-4 h-4 mr-1" />$
-                                      {(activity.cost_cents / 100).toFixed(2)} per person
+                                      {(activity.cost_cents / 100).toFixed(2)}{' '}
+                                      {t('tripDetail.perPerson')}
                                     </div>
                                   )}
                                   {activity.source === 'ai' && (
                                     <div className="flex items-center text-purple-600">
                                       <Sparkles className="w-4 h-4 mr-1" />
-                                      AI Suggested
+                                      {t('tripDetail.aiSuggested')}
                                     </div>
                                   )}
                                 </div>

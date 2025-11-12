@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '../lib/store';
 import { Trip } from '../lib/mock-supabase';
 import { supabase } from '../lib/supabase';
@@ -25,6 +26,7 @@ type StatusFilter = 'all' | 'planned' | 'locked' | 'archived';
 type SortOption = 'date-desc' | 'date-asc' | 'title-asc' | 'title-desc';
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -53,11 +55,11 @@ export default function DashboardPage() {
       await loadTrips();
     } catch (err: any) {
       console.error('Error loading trips:', err);
-      setError(err.message || 'Failed to load trips. Please refresh the page.');
+      setError(err.message || t('dashboard.errorLoadingTrips'));
     } finally {
       setLoading(false);
     }
-  }, [user, loadTrips]);
+  }, [user, loadTrips, t]);
 
   // Load member counts when trips change
   useEffect(() => {
@@ -200,7 +202,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Loading your trips...</p>
+          <p className="mt-4 text-gray-600">{t('dashboard.loadingTrips')}</p>
         </div>
       </div>
     );
@@ -213,13 +215,15 @@ export default function DashboardPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
             <AlertCircle className="w-8 h-8 text-red-600" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Error Loading Trips</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            {t('dashboard.errorLoadingTrips')}
+          </h3>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={loadTripsData}
             className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition"
           >
-            Try Again
+            {t('trip.tryAgain')}
           </button>
         </div>
       </div>
@@ -264,11 +268,9 @@ export default function DashboardPage() {
         {/* Welcome Section */}
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome back, {user?.display_name}!
+            {t('trip.welcomeBack', { name: user?.display_name })}
           </h2>
-          <p className="text-gray-600">
-            Plan your next adventure or continue working on your existing trips.
-          </p>
+          <p className="text-gray-600">{t('trip.planAdventure')}</p>
         </div>
 
         {/* Controls Section */}
@@ -280,7 +282,7 @@ export default function DashboardPage() {
               className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition shadow-lg hover:shadow-xl"
             >
               <Sparkles className="w-5 h-5 mr-2" />
-              Create Trip with AI
+              {t('trip.createTripWithAI')}
             </button>
           </div>
 
@@ -294,7 +296,7 @@ export default function DashboardPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search trips by title or destination..."
+                  placeholder={t('trip.searchPlaceholder')}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -306,10 +308,10 @@ export default function DashboardPage() {
                   onChange={(e) => setSortBy(e.target.value as SortOption)}
                   className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
                 >
-                  <option value="date-desc">Newest First</option>
-                  <option value="date-asc">Oldest First</option>
-                  <option value="title-asc">Title A-Z</option>
-                  <option value="title-desc">Title Z-A</option>
+                  <option value="date-desc">{t('trip.newestFirst')}</option>
+                  <option value="date-asc">{t('trip.oldestFirst')}</option>
+                  <option value="title-asc">{t('trip.titleAZ')}</option>
+                  <option value="title-desc">{t('trip.titleZA')}</option>
                 </select>
                 <ArrowUpDown className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
               </div>
@@ -325,7 +327,7 @@ export default function DashboardPage() {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                All
+                {t('trip.all')}
               </button>
               <button
                 onClick={() => setStatusFilter('planned')}
@@ -335,7 +337,7 @@ export default function DashboardPage() {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                Planned
+                {t('trip.planned')}
               </button>
               <button
                 onClick={() => setStatusFilter('locked')}
@@ -345,7 +347,7 @@ export default function DashboardPage() {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                Locked
+                {t('trip.locked')}
               </button>
               <button
                 onClick={() => setStatusFilter('archived')}
@@ -355,7 +357,7 @@ export default function DashboardPage() {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                Archived
+                {t('trip.archived')}
               </button>
             </div>
           </div>
@@ -368,19 +370,17 @@ export default function DashboardPage() {
               <Plane className="w-8 h-8 text-blue-600" />
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">
-              {trips.length === 0 ? 'No trips yet' : 'No trips match your filters'}
+              {trips.length === 0 ? t('trip.noTripsYet') : t('trip.noTripsMatch')}
             </h3>
             <p className="text-gray-600 mb-6">
-              {trips.length === 0
-                ? 'Get started by creating your first trip with AI-powered itinerary generation!'
-                : 'Try adjusting your search or filter criteria.'}
+              {trips.length === 0 ? t('trip.getStartedMessage') : t('trip.tryAdjustingFilters')}
             </p>
             <button
               onClick={() => setShowCreateTripModal(true)}
               className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition"
             >
               <Plus className="w-5 h-5 mr-2" />
-              Create Your First Trip
+              {t('trip.createFirstTrip')}
             </button>
           </div>
         ) : (
@@ -415,8 +415,10 @@ export default function DashboardPage() {
                   <div className="flex items-center text-gray-600 mb-4">
                     <Users className="w-4 h-4 mr-2" />
                     <span className="text-sm">
-                      {tripMemberCounts[trip.id] || 0} member
-                      {(tripMemberCounts[trip.id] || 0) !== 1 ? 's' : ''}
+                      {tripMemberCounts[trip.id] || 0}{' '}
+                      {(tripMemberCounts[trip.id] || 0) === 1
+                        ? t('trip.member')
+                        : t('trip.members')}
                     </span>
                   </div>
 
@@ -431,7 +433,7 @@ export default function DashboardPage() {
                             : 'bg-gray-100 text-gray-700'
                       }`}
                     >
-                      {trip.status.charAt(0).toUpperCase() + trip.status.slice(1)}
+                      {t(`trip.${trip.status}`)}
                     </span>
                   </div>
                 </div>
