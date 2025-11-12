@@ -55,33 +55,82 @@ export default function CreateActivityModal({ tripId, onClose }: CreateActivityM
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    // Validate required fields
     if (!formData.title.trim()) {
-      setError(t('activityModal.titleRequired'));
+      setError(t('activityModal.titleRequired') || 'Title is required');
+      return;
+    }
+
+    // Validate time range
+    if (formData.startTime && formData.endTime) {
+      const start = new Date(`2000-01-01T${formData.startTime}`);
+      const end = new Date(`2000-01-01T${formData.endTime}`);
+      if (end <= start) {
+        setError(t('activityModal.endTimeAfterStart') || 'End time must be after start time');
+        return;
+      }
+    }
+
+    // Validate cost if provided
+    if (formData.cost && (isNaN(parseFloat(formData.cost)) || parseFloat(formData.cost) < 0)) {
+      setError(t('activityModal.invalidCost') || 'Cost must be a positive number');
+      return;
+    }
+
+    // Validate coordinates if provided
+    if (
+      formData.lat &&
+      (isNaN(parseFloat(formData.lat)) ||
+        parseFloat(formData.lat) < -90 ||
+        parseFloat(formData.lat) > 90)
+    ) {
+      setError(t('activityModal.invalidLatitude') || 'Latitude must be between -90 and 90');
+      return;
+    }
+    if (
+      formData.lon &&
+      (isNaN(parseFloat(formData.lon)) ||
+        parseFloat(formData.lon) < -180 ||
+        parseFloat(formData.lon) > 180)
+    ) {
+      setError(t('activityModal.invalidLongitude') || 'Longitude must be between -180 and 180');
       return;
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       // Database schema uses TIME (not TIMESTAMP), so we send just the time portion
-      // For date grouping, we'll use the date field or fall back to created_at
+      // Format: HH:MM:SS (TIME format for database)
       let start_time: string | undefined;
       let end_time: string | undefined;
 
       if (formData.startTime) {
-        // Format: HH:MM:SS (TIME format for database)
-        start_time = `${formData.startTime}:00`;
+        // Ensure format is HH:MM:SS
+        const timeParts = formData.startTime.split(':');
+        if (timeParts.length === 2) {
+          start_time = `${formData.startTime}:00`;
+        } else {
+          start_time = formData.startTime; // Already in HH:MM:SS format
+        }
       }
       if (formData.endTime) {
-        // Format: HH:MM:SS (TIME format for database)
-        end_time = `${formData.endTime}:00`;
+        // Ensure format is HH:MM:SS
+        const timeParts = formData.endTime.split(':');
+        if (timeParts.length === 2) {
+          end_time = `${formData.endTime}:00`;
+        } else {
+          end_time = formData.endTime; // Already in HH:MM:SS format
+        }
       }
 
+      // Create activity using store function
       await createActivity({
         trip_id: tripId,
-        title: formData.title,
-        description: formData.description || undefined,
+        title: formData.title.trim(),
+        description: formData.description.trim() || undefined,
         category: formData.category || undefined,
         start_time: start_time,
         end_time: end_time,
@@ -93,10 +142,35 @@ export default function CreateActivityModal({ tripId, onClose }: CreateActivityM
         source: 'manual',
       });
 
+      // Reset form after successful creation
+      setFormData({
+        title: '',
+        description: '',
+        category: '',
+        date: '',
+        startTime: '',
+        endTime: '',
+        cost: '',
+        currency: 'USD',
+        lat: '',
+        lon: '',
+        status: 'proposed',
+      });
+
+      // Close modal - activities will refresh via real-time subscription
       onClose();
     } catch (err: any) {
       console.error('Error creating activity:', err);
-      setError(err.message || t('errors.failedToCreateActivity'));
+      // Provide user-friendly error messages
+      let errorMessage = t('errors.failedToCreateActivity') || 'Failed to create activity';
+      if (err.message) {
+        errorMessage = err.message;
+      } else if (err.code === '23505') {
+        errorMessage = t('errors.duplicateActivity') || 'An activity with this name already exists';
+      } else if (err.code === '23503') {
+        errorMessage = t('errors.invalidTrip') || 'Invalid trip reference';
+      }
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -215,7 +289,7 @@ export default function CreateActivityModal({ tripId, onClose }: CreateActivityM
                 type="time"
                 value={formData.endTime}
                 onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                min={formData.startTime}
+                min={formData.startTime || undefined}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               />
             </div>
@@ -241,9 +315,10 @@ export default function CreateActivityModal({ tripId, onClose }: CreateActivityM
               <input
                 type="number"
                 step="0.01"
+                min="0"
                 value={formData.cost}
                 onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 placeholder="0.00"
               />
             </div>

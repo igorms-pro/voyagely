@@ -9,6 +9,7 @@ import {
   subscribeToTrip,
   subscribeToMessages,
   subscribeToActivities,
+  subscribeToVotes,
   RealtimePayload,
   unsubscribeFromChannel,
 } from '../lib/realtime-service';
@@ -58,11 +59,13 @@ export default function TripDetailPage() {
     status: 'planned' as 'planned' | 'locked' | 'archived',
   });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [votingActivityId, setVotingActivityId] = useState<string | null>(null);
 
   // Realtime subscriptions refs
   const tripSubscriptionRef = useRef<RealtimeChannel | null>(null);
   const messagesSubscriptionRef = useRef<RealtimeChannel | null>(null);
   const activitiesSubscriptionRef = useRef<RealtimeChannel | null>(null);
+  const votesSubscriptionRef = useRef<RealtimeChannel | null>(null);
 
   const user = useStore((state) => state.user);
   const currentTrip = useStore((state) => state.currentTrip);
@@ -71,7 +74,11 @@ export default function TripDetailPage() {
   const deleteTrip = useStore((state) => state.deleteTrip);
   const activities = useStore((state) => state.activities);
   const loadActivities = useStore((state) => state.loadActivities);
+  const addActivity = useStore((state) => state.addActivity);
+  const updateActivityInState = useStore((state) => state.updateActivityInState);
+  const setActivities = useStore((state) => state.setActivities);
   const votes = useStore((state) => state.votes);
+  const setVotes = useStore((state) => state.setVotes);
   const loadVotes = useStore((state) => state.loadVotes);
   const createOrUpdateVote = useStore((state) => state.createOrUpdateVote);
   const showAddActivityModal = useStore((state) => state.showAddActivityModal);
@@ -230,61 +237,145 @@ export default function TripDetailPage() {
     activitiesSubscriptionRef.current = subscribeToActivities(
       tripId,
       (payload: RealtimePayload) => {
-        if (payload.eventType === 'INSERT' && payload.new) {
-          const activity = payload.new as any;
-          // Map to Activity format
-          const mappedActivity: Activity = {
-            id: activity.id,
-            trip_id: activity.trip_id,
-            itinerary_day_id: activity.itinerary_day_id || undefined,
-            title: activity.title,
-            description: activity.description || '',
-            category: activity.category || '',
-            start_time: activity.start_time || undefined,
-            end_time: activity.end_time || undefined,
-            cost_cents: activity.cost_cents || undefined,
-            lat: activity.lat || undefined,
-            lon: activity.lon || undefined,
-            status: activity.status,
-            source: activity.source,
-            created_at: activity.created_at,
-          };
-          const { activities: currentActivities, setActivities: updateActivities } =
-            useStore.getState();
-          updateActivities([...currentActivities, mappedActivity]);
-          // Load votes for the new activity
-          loadVotes([mappedActivity.id]);
-        } else if (payload.eventType === 'UPDATE' && payload.new) {
-          const activity = payload.new as any;
-          const mappedActivity: Activity = {
-            id: activity.id,
-            trip_id: activity.trip_id,
-            itinerary_day_id: activity.itinerary_day_id || undefined,
-            title: activity.title,
-            description: activity.description || '',
-            category: activity.category || '',
-            start_time: activity.start_time || undefined,
-            end_time: activity.end_time || undefined,
-            cost_cents: activity.cost_cents || undefined,
-            lat: activity.lat || undefined,
-            lon: activity.lon || undefined,
-            status: activity.status,
-            source: activity.source,
-            created_at: activity.created_at,
-          };
-          const { activities: currentActivities, setActivities: updateActivities } =
-            useStore.getState();
-          updateActivities(
-            currentActivities.map((a) => (a.id === activity.id ? mappedActivity : a)),
-          );
-        } else if (payload.eventType === 'DELETE' && payload.old) {
-          // Remove activity from state
-          const { activities: currentActivities, setActivities: updateActivities } =
-            useStore.getState();
-          updateActivities(currentActivities.filter((a) => a.id !== payload.old?.id));
+        try {
+          if (payload.eventType === 'INSERT' && payload.new) {
+            const activity = payload.new as any;
+            // Only process if activity belongs to this trip (safety check)
+            if (activity.trip_id !== tripId) return;
+
+            // Map to Activity format
+            const mappedActivity: Activity = {
+              id: activity.id,
+              trip_id: activity.trip_id,
+              itinerary_day_id: activity.itinerary_day_id || undefined,
+              title: activity.title,
+              description: activity.description || '',
+              category: activity.category || '',
+              start_time: activity.start_time || undefined,
+              end_time: activity.end_time || undefined,
+              cost_cents: activity.cost_cents ?? undefined,
+              lat: activity.lat ?? undefined,
+              lon: activity.lon ?? undefined,
+              status: activity.status,
+              source: activity.source,
+              created_at: activity.created_at,
+            };
+            // Use store function to add activity
+            addActivity(mappedActivity);
+            // Load votes for the new activity
+            loadVotes([mappedActivity.id]);
+          } else if (payload.eventType === 'UPDATE' && payload.new) {
+            const activity = payload.new as any;
+            // Only process if activity belongs to this trip (safety check)
+            if (activity.trip_id !== tripId) return;
+
+            // Map updates to Activity format
+            const updates: Partial<Activity> = {
+              title: activity.title,
+              description: activity.description || '',
+              category: activity.category || '',
+              start_time: activity.start_time || undefined,
+              end_time: activity.end_time || undefined,
+              cost_cents: activity.cost_cents ?? undefined,
+              lat: activity.lat ?? undefined,
+              lon: activity.lon ?? undefined,
+              status: activity.status,
+              source: activity.source,
+            };
+            // Use store function to update activity
+            updateActivityInState(activity.id, updates);
+          } else if (payload.eventType === 'DELETE' && payload.old) {
+            const activityId = payload.old?.id;
+            if (!activityId) return;
+            // Remove activity from state (soft delete - already filtered by deleted_at in queries)
+            const { activities: currentActivities } = useStore.getState();
+            setActivities(currentActivities.filter((a) => a.id !== activityId));
+            // Also remove votes for this activity
+            const { votes: currentVotes } = useStore.getState();
+            const updatedVotes = { ...currentVotes };
+            delete updatedVotes[activityId];
+            setVotes(updatedVotes);
+          }
+        } catch (error) {
+          console.error('Error handling activities real-time event:', error);
         }
       },
     );
+
+    // Subscribe to votes
+    votesSubscriptionRef.current = subscribeToVotes(tripId, (payload: RealtimePayload) => {
+      try {
+        if (payload.eventType === 'INSERT' && payload.new) {
+          const vote = payload.new as any;
+          // Check if this vote is for an activity in the current trip
+          const { activities: currentActivities } = useStore.getState();
+          const activity = currentActivities.find((a) => a.id === vote.activity_id);
+          if (!activity || activity.trip_id !== tripId) return;
+
+          // Map to Vote format
+          const mappedVote: Vote = {
+            id: vote.id,
+            activity_id: vote.activity_id,
+            user_id: vote.user_id,
+            choice: vote.choice,
+            created_at: vote.created_at,
+          };
+
+          // Add vote to store
+          const { votes: currentVotes } = useStore.getState();
+          const activityVotes = currentVotes[vote.activity_id] || [];
+          // Check if vote already exists (avoid duplicates)
+          const existingVote = activityVotes.find((v) => v.id === vote.id);
+          if (!existingVote) {
+            setVotes({
+              ...currentVotes,
+              [vote.activity_id]: [...activityVotes, mappedVote],
+            });
+          }
+        } else if (payload.eventType === 'UPDATE' && payload.new) {
+          const vote = payload.new as any;
+          // Check if this vote is for an activity in the current trip
+          const { activities: currentActivities } = useStore.getState();
+          const activity = currentActivities.find((a) => a.id === vote.activity_id);
+          if (!activity || activity.trip_id !== tripId) return;
+
+          // Map to Vote format
+          const mappedVote: Vote = {
+            id: vote.id,
+            activity_id: vote.activity_id,
+            user_id: vote.user_id,
+            choice: vote.choice,
+            created_at: vote.created_at,
+          };
+
+          // Update vote in store
+          const { votes: currentVotes } = useStore.getState();
+          const activityVotes = currentVotes[vote.activity_id] || [];
+          setVotes({
+            ...currentVotes,
+            [vote.activity_id]: activityVotes.map((v) => (v.id === vote.id ? mappedVote : v)),
+          });
+        } else if (payload.eventType === 'DELETE' && payload.old) {
+          const vote = payload.old as any;
+          if (!vote?.activity_id) return;
+
+          // Check if this vote is for an activity in the current trip
+          const { activities: currentActivities } = useStore.getState();
+          const activity = currentActivities.find((a) => a.id === vote.activity_id);
+          if (!activity || activity.trip_id !== tripId) return;
+
+          // Remove vote from store
+          const { votes: currentVotes } = useStore.getState();
+          const activityVotes = currentVotes[vote.activity_id] || [];
+          setVotes({
+            ...currentVotes,
+            [vote.activity_id]: activityVotes.filter((v) => v.id !== vote.id),
+          });
+        }
+      } catch (error) {
+        console.error('Error handling votes real-time event:', error);
+      }
+    });
 
     // Cleanup subscriptions on unmount
     return () => {
@@ -300,8 +391,23 @@ export default function TripDetailPage() {
         unsubscribeFromChannel(activitiesSubscriptionRef.current);
         activitiesSubscriptionRef.current = null;
       }
+      if (votesSubscriptionRef.current) {
+        unsubscribeFromChannel(votesSubscriptionRef.current);
+        votesSubscriptionRef.current = null;
+      }
     };
-  }, [tripId, user, navigate, setCurrentTrip, updateTrip, loadVotes]);
+  }, [
+    tripId,
+    user,
+    navigate,
+    setCurrentTrip,
+    updateTrip,
+    loadVotes,
+    addActivity,
+    updateActivityInState,
+    setActivities,
+    setVotes,
+  ]);
 
   const handleUpdateTrip = async () => {
     if (!tripId || !currentTrip) return;
@@ -359,13 +465,67 @@ export default function TripDetailPage() {
   };
 
   const handleVote = async (activityId: string, choice: 'up' | 'down') => {
-    if (!user) return;
+    if (!user) {
+      alert(t('errors.mustBeLoggedIn') || 'You must be logged in to vote');
+      return;
+    }
+
+    setVotingActivityId(activityId);
+
+    // Check if user is clicking the same vote (remove vote)
+    const currentVote = getUserVote(activityId);
+    const isRemovingVote = currentVote === choice;
+
+    // Store original votes for rollback
+    const originalVotes = { ...votes };
+    const activityVotes = votes[activityId] || [];
 
     try {
-      await createOrUpdateVote(activityId, choice);
+      if (isRemovingVote) {
+        // Remove vote: optimistic update
+        const filteredVotes = activityVotes.filter((v) => v.user_id !== user.id);
+        setVotes({
+          ...votes,
+          [activityId]: filteredVotes,
+        });
+
+        // Delete vote from database
+        const userVote = activityVotes.find((v) => v.user_id === user.id);
+        if (userVote) {
+          const { error } = await supabase.from('votes').delete().eq('id', userVote.id);
+
+          if (error) {
+            throw error;
+          }
+        }
+      } else {
+        // Add/update vote: optimistic update
+        const filteredVotes = activityVotes.filter((v) => v.user_id !== user.id);
+        const optimisticVote: Vote = {
+          id: `temp-${Date.now()}`, // Temporary ID
+          activity_id: activityId,
+          user_id: user.id,
+          choice: choice,
+          created_at: new Date().toISOString(),
+        };
+
+        setVotes({
+          ...votes,
+          [activityId]: [...filteredVotes, optimisticVote],
+        });
+
+        // Perform actual vote
+        await createOrUpdateVote(activityId, choice);
+      }
     } catch (err: any) {
       console.error('Error voting:', err);
-      alert(err.message || t('errors.failedToVote'));
+
+      // Rollback optimistic update on error
+      setVotes(originalVotes);
+
+      alert(err.message || t('errors.failedToVote') || 'Failed to vote. Please try again.');
+    } finally {
+      setVotingActivityId(null);
     }
   };
 
@@ -769,26 +929,50 @@ export default function TripDetailPage() {
                               <div className="ml-6 flex flex-col items-center space-y-2">
                                 <button
                                   onClick={() => handleVote(activity.id, 'up')}
+                                  disabled={votingActivityId === activity.id || !user}
+                                  aria-label={
+                                    userVote === 'up'
+                                      ? t('tripDetail.removeUpvote') || 'Remove upvote'
+                                      : t('tripDetail.upvote') || 'Upvote this activity'
+                                  }
                                   className={`p-2 rounded-lg transition ${
                                     userVote === 'up'
                                       ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
                                       : 'text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-green-600 dark:hover:text-green-400'
-                                  }`}
+                                  } disabled:opacity-50 disabled:cursor-not-allowed`}
                                 >
-                                  <ThumbsUp className="w-5 h-5" />
+                                  <ThumbsUp
+                                    className={`w-5 h-5 ${
+                                      votingActivityId === activity.id ? 'animate-pulse' : ''
+                                    }`}
+                                  />
                                 </button>
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                <span
+                                  className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                                  aria-label={`${upvotes - downvotes} ${t('tripDetail.netVotes') || 'net votes'}`}
+                                >
+                                  {upvotes - downvotes > 0 ? '+' : ''}
                                   {upvotes - downvotes}
                                 </span>
                                 <button
                                   onClick={() => handleVote(activity.id, 'down')}
+                                  disabled={votingActivityId === activity.id || !user}
+                                  aria-label={
+                                    userVote === 'down'
+                                      ? t('tripDetail.removeDownvote') || 'Remove downvote'
+                                      : t('tripDetail.downvote') || 'Downvote this activity'
+                                  }
                                   className={`p-2 rounded-lg transition ${
                                     userVote === 'down'
                                       ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
                                       : 'text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-red-600 dark:hover:text-red-400'
-                                  }`}
+                                  } disabled:opacity-50 disabled:cursor-not-allowed`}
                                 >
-                                  <ThumbsDown className="w-5 h-5" />
+                                  <ThumbsDown
+                                    className={`w-5 h-5 ${
+                                      votingActivityId === activity.id ? 'animate-pulse' : ''
+                                    }`}
+                                  />
                                 </button>
                               </div>
                             </div>

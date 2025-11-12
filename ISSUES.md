@@ -165,13 +165,16 @@ See "Next Sprint: Activities & Votes CRUD" section above for detailed task break
 
 ### Authentication & User Management
 
-- [x] 🟢 Basic Supabase authentication (replaced mock)
-  - [x] Email/password signup and login
+- [x] 🟡 Basic Supabase authentication (partially implemented)
+  - [x] Email/password signup (SignupPage uses Supabase Auth)
+  - [ ] Email/password login (LoginPage still uses fake auth)
+  - [ ] Session persistence check on app load
+  - [ ] Auth state listener set up in App.tsx
   - [ ] Magic link authentication
   - [ ] Social OAuth (Google, GitHub)
   - [ ] Password reset flow
   - [ ] Email verification
-  - [x] Session management
+  - [x] Session management (partial - needs completion)
 - [ ] 🔴 User profile management
   - Profile editing (display name, avatar)
   - Preferences storage
