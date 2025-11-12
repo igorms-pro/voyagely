@@ -1,9 +1,52 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" suppressHydrationWarning>
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    // Prevent flash of unstyled content (FOUC) for dark mode
+    (function() {
+      const theme = localStorage.getItem('wanderly-theme');
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      
+      if (theme === 'dark' || (!theme && systemPrefersDark)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    })();
+    
+    // Set language attribute on html element for i18n
+    (function() {
+      const savedLanguage = localStorage.getItem('i18nextLng');
+      const supportedLanguages = ['en', 'fr', 'es', 'pt', 'pt-BR', 'ja', 'zh', 'de', 'it', 'ru'];
+      const browserLanguage = navigator.language;
+      
+      let language = savedLanguage || browserLanguage;
+      
+      // Validate language is supported
+      if (!supportedLanguages.includes(language)) {
+        // Try to match base language (e.g., 'pt-BR' -> 'pt', 'en-US' -> 'en')
+        const baseLanguage = language.split('-')[0];
+        if (supportedLanguages.includes(baseLanguage)) {
+          language = baseLanguage;
+        } else if (language.includes('-')) {
+          // Try full match first (e.g., 'pt-BR')
+          const fullMatch = supportedLanguages.find(lang => language.startsWith(lang));
+          if (fullMatch) {
+            language = fullMatch;
+          } else {
+            language = 'en'; // Fallback to English
+          }
+        } else {
+          language = 'en'; // Fallback to English
+        }
+      }
+      
+      document.documentElement.setAttribute('lang', language);
+    })();
+  </script>
 </head>
 
 <body>

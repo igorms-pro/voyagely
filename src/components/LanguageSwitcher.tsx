@@ -65,7 +65,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
   if (!ready) {
     return (
       <div
-        className={`${sizeClasses[size]} bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center`}
+        className={`${sizeClasses[size]} bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 rounded-lg flex items-center justify-center shadow-sm dark:shadow-none`}
       >
         <span className="text-xs">...</span>
       </div>
@@ -84,21 +84,23 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`${sizeClasses[size]} bg-white/10 border border-white/20 rounded-lg flex items-center justify-center cursor-pointer hover:bg-white/20 transition`}
+          className={`${sizeClasses[size]} bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 rounded-lg flex items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-white/20 transition shadow-sm dark:shadow-none`}
           aria-label={t('settings.languageSelection')}
           aria-expanded={isOpen}
         >
-          <span>{flagEmojis[currentLanguage as keyof typeof flagEmojis]}</span>
+          <span className="text-lg">{flagEmojis[currentLanguage as keyof typeof flagEmojis]}</span>
         </button>
 
         {isOpen && (
-          <div className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[120px]">
+          <div className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg dark:shadow-xl z-50 min-w-[120px]">
             {availableLanguages.map((lang) => (
               <button
                 key={lang}
                 onClick={() => handleLanguageChange(lang)}
-                className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 ${
-                  currentLanguage === lang ? 'text-blue-600 bg-blue-50' : 'text-gray-900'
+                className={`w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 ${
+                  currentLanguage === lang
+                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
+                    : 'text-gray-900 dark:text-gray-100'
                 }`}
               >
                 <span className="text-lg">{flagEmojis[lang as keyof typeof flagEmojis]}</span>
@@ -121,11 +123,11 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
   return (
     <button
       onClick={() => changeLanguage(nextLanguage)}
-      className={`${sizeClasses[size]} bg-white/10 border border-white/20 rounded-lg flex items-center justify-center cursor-pointer hover:bg-white/20 transition`}
+      className={`${sizeClasses[size]} bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 rounded-lg flex items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-white/20 transition shadow-sm dark:shadow-none`}
       aria-label={t('settings.languageSelection')}
       title={t('settings.languageSelection')}
     >
-      <span>{flagEmojis[currentLanguage as keyof typeof flagEmojis]}</span>
+      <span className="text-lg">{flagEmojis[currentLanguage as keyof typeof flagEmojis]}</span>
     </button>
   );
 };
