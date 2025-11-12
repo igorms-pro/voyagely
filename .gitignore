@@ -41,6 +41,9 @@ docs/AGENT_ROLE.md
 docs/AGENT_ROLES.md
 docs/AGENT_ARCH_DESIGN_ENGINEERING.md
 
+# Issue task assignments (not versioned for rapid iteration)
+docs/issues/
+
 # Keep .env.example in version control
 !.env.example
 

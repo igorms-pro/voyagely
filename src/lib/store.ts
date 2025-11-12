@@ -612,6 +612,8 @@ export const useStore = create<AppState>((set, get) => ({
       if (updates.title !== undefined) updateData.title = updates.title;
       if (updates.description !== undefined) updateData.description = updates.description || null;
       if (updates.category !== undefined) updateData.category = updates.category || null;
+      if (updates.itinerary_day_id !== undefined)
+        updateData.itinerary_day_id = updates.itinerary_day_id || null;
       if (updates.start_time !== undefined) updateData.start_time = updates.start_time || null;
       if (updates.end_time !== undefined) updateData.end_time = updates.end_time || null;
       if (updates.cost_cents !== undefined) updateData.cost_cents = updates.cost_cents ?? null;
@@ -730,43 +732,22 @@ export const useStore = create<AppState>((set, get) => ({
         throw new Error('User not authenticated');
       }
 
-      // Check if vote already exists
-      const { data: existingVote } = await supabase
+      // Use upsert to handle UNIQUE constraint on (activity_id, user_id)
+      // This is more efficient and atomic than check-then-update
+      const { data: vote, error } = await supabase
         .from('votes')
-        .select('*')
-        .eq('activity_id', activityId)
-        .eq('user_id', user.id)
-        .single();
-
-      let vote;
-      let error;
-
-      if (existingVote) {
-        // Update existing vote
-        const existingVoteData = existingVote as any;
-        const { data: updatedVote, error: updateError } = await supabase
-          .from('votes')
-          // @ts-expect-error - Supabase type inference issue
-          .update({ choice: choice } as any)
-          .eq('id', existingVoteData.id)
-          .select()
-          .single();
-        vote = updatedVote;
-        error = updateError;
-      } else {
-        // Insert new vote
-        const { data: newVote, error: insertError } = await supabase
-          .from('votes')
-          .insert({
+        .upsert(
+          {
             activity_id: activityId,
             user_id: user.id,
             choice: choice,
-          } as any)
-          .select()
-          .single();
-        vote = newVote;
-        error = insertError;
-      }
+          } as any,
+          {
+            onConflict: 'activity_id,user_id',
+          },
+        )
+        .select()
+        .single();
 
       if (error) {
         console.error('Error creating/updating vote:', error);
@@ -778,12 +759,13 @@ export const useStore = create<AppState>((set, get) => ({
       }
 
       // Map database Vote to app Vote format
+      const voteData = vote as any;
       const mappedVote: Vote = {
-        id: vote.id,
-        activity_id: vote.activity_id,
-        user_id: vote.user_id,
-        choice: vote.choice,
-        created_at: vote.created_at,
+        id: voteData.id,
+        activity_id: voteData.activity_id,
+        user_id: voteData.user_id,
+        choice: voteData.choice,
+        created_at: voteData.created_at,
       };
 
       // Update state
