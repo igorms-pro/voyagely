@@ -225,40 +225,60 @@ export default function SignupPage() {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 dark:bg-blue-500 rounded-2xl mb-4">
               <Plane className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            <h1
+              className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2"
+              data-testid="signup-join-title"
+            >
               {t('auth.joinTitle')}
             </h1>
-            <p className="text-gray-600 dark:text-gray-300">{t('auth.joinSubtitle')}</p>
+            <p className="text-gray-600 dark:text-gray-300" data-testid="signup-join-subtitle">
+              {t('auth.joinSubtitle')}
+            </p>
           </div>
 
           {/* Signup Form */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:shadow-2xl p-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
+          <div
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:shadow-2xl p-8"
+            data-testid="signup-form"
+          >
+            <h2
+              className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6"
+              data-testid="signup-form-title"
+            >
               {t('auth.createAccount')}
             </h2>
 
             {error && (
-              <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm flex items-start">
+              <div
+                className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm flex items-start"
+                data-testid="signup-error-message"
+              >
                 <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
                 <span>{error}</span>
               </div>
             )}
 
             {success && (
-              <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 text-sm flex items-start">
+              <div
+                className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 text-sm flex items-start"
+                data-testid="signup-success-message"
+              >
                 <CheckCircle2 className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
                 <span>{loadingStep || 'Account created successfully!'}</span>
               </div>
             )}
 
             {loading && loadingStep && (
-              <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-blue-700 dark:text-blue-400 text-sm flex items-center">
+              <div
+                className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-blue-700 dark:text-blue-400 text-sm flex items-center"
+                data-testid="signup-loading-message"
+              >
                 <Loader2 className="w-5 h-5 mr-2 animate-spin flex-shrink-0" />
                 <span>{loadingStep}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" data-testid="signup-form-element">
               <div>
                 <label
                   htmlFor="displayName"
@@ -277,6 +297,7 @@ export default function SignupPage() {
                   required
                   disabled={loading || success}
                   minLength={2}
+                  data-testid="signup-display-name-input"
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:opacity-50 disabled:bg-gray-50 dark:disabled:bg-gray-800"
                   placeholder={t('auth.displayNamePlaceholder')}
                 />
@@ -299,6 +320,7 @@ export default function SignupPage() {
                   }}
                   required
                   disabled={loading || success}
+                  data-testid="signup-email-input"
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:opacity-50 disabled:bg-gray-50 dark:disabled:bg-gray-800"
                   placeholder={t('auth.emailPlaceholder')}
                 />
@@ -323,11 +345,15 @@ export default function SignupPage() {
                   disabled={loading || success}
                   minLength={6}
                   maxLength={72}
+                  data-testid="signup-password-input"
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:opacity-50 disabled:bg-gray-50 dark:disabled:bg-gray-800"
                   placeholder={t('auth.passwordMinLength')}
                 />
                 {password && (
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <p
+                    className="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                    data-testid="signup-password-hint"
+                  >
                     {password.length < 6
                       ? t('auth.passwordMoreChars', { count: 6 - password.length })
                       : password.length > 72
@@ -340,6 +366,7 @@ export default function SignupPage() {
               <button
                 type="submit"
                 disabled={loading || success}
+                data-testid="signup-submit-button"
                 className="w-full bg-blue-600 dark:bg-blue-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {loading ? (
@@ -363,6 +390,7 @@ export default function SignupPage() {
                 {t('auth.alreadyHaveAccount')}{' '}
                 <Link
                   to="/login"
+                  data-testid="signup-login-link"
                   className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
                 >
                   {t('auth.signIn')}

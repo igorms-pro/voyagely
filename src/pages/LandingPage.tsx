@@ -34,7 +34,11 @@ export default function LandingPage() {
             <div className="flex items-center space-x-3">
               <LanguageSwitcher variant="dropdown" size="md" />
               <ThemeToggle />
-              <Link to="/login" className="text-white hover:text-blue-100 font-medium transition">
+              <Link
+                to="/login"
+                className="text-white hover:text-blue-100 font-medium transition"
+                data-testid="landing-signin-link"
+              >
                 {t('auth.signIn')}
               </Link>
             </div>
@@ -43,12 +47,18 @@ export default function LandingPage() {
 
         {/* Hero Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
+          <h1
+            className="text-5xl md:text-6xl font-bold text-white mb-6"
+            data-testid="landing-hero-title"
+          >
             {t('landing.heroTitle')}
             <br />
             <span className="text-blue-200">{t('landing.heroSubtitle')}</span>
           </h1>
-          <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
+          <p
+            className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto"
+            data-testid="landing-hero-description"
+          >
             {t('landing.heroDescription')}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
@@ -76,10 +86,16 @@ export default function LandingPage() {
       <div className="py-24 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            <h2
+              className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4"
+              data-testid="landing-features-title"
+            >
               {t('landing.featuresTitle')}
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300">
+            <p
+              className="text-xl text-gray-600 dark:text-gray-300"
+              data-testid="landing-features-subtitle"
+            >
               {t('landing.featuresSubtitle')}
             </p>
           </div>
