@@ -58,7 +58,7 @@ export default function LandingPage() {
               data-testid="hero-cta-link"
             >
               <Sparkles className="w-6 h-6 mr-2" />
-              Get Started
+              {t('auth.getStarted')}
               <ArrowRight className="w-6 h-6 ml-2" />
             </Link>
           </div>
@@ -76,10 +76,8 @@ export default function LandingPage() {
       <div className="py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Everything You Need</h2>
-            <p className="text-xl text-gray-600">
-              Powerful features to make travel planning effortless
-            </p>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">{t('landing.featuresTitle')}</h2>
+            <p className="text-xl text-gray-600">{t('landing.featuresSubtitle')}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -88,11 +86,8 @@ export default function LandingPage() {
               <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-xl mb-4">
                 <Sparkles className="w-6 h-6 text-blue-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">AI-Powered Itineraries</h3>
-              <p className="text-gray-600">
-                Generate detailed day-by-day travel plans instantly using advanced AI technology
-                tailored to your preferences.
-              </p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{t('landing.aiItineraries')}</h3>
+              <p className="text-gray-600">{t('landing.aiItinerariesDesc')}</p>
             </div>
 
             {/* Feature 2 */}
@@ -100,11 +95,10 @@ export default function LandingPage() {
               <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 rounded-xl mb-4">
                 <Users className="w-6 h-6 text-purple-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Collaborative Planning</h3>
-              <p className="text-gray-600">
-                Invite friends and family to plan together. Everyone can suggest activities and vote
-                on the best options.
-              </p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                {t('landing.collaborativePlanning')}
+              </h3>
+              <p className="text-gray-600">{t('landing.collaborativePlanningDesc')}</p>
             </div>
 
             {/* Feature 3 */}
@@ -112,11 +106,8 @@ export default function LandingPage() {
               <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-xl mb-4">
                 <MessageSquare className="w-6 h-6 text-green-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Real-Time Chat</h3>
-              <p className="text-gray-600">
-                Discuss plans with your travel group in real-time. Make decisions faster and keep
-                everyone in the loop.
-              </p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{t('landing.realtimeChat')}</h3>
+              <p className="text-gray-600">{t('landing.realtimeChatDesc')}</p>
             </div>
 
             {/* Feature 4 */}
@@ -124,11 +115,10 @@ export default function LandingPage() {
               <div className="inline-flex items-center justify-center w-12 h-12 bg-yellow-100 rounded-xl mb-4">
                 <ThumbsUp className="w-6 h-6 text-yellow-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Activity Voting</h3>
-              <p className="text-gray-600">
-                Vote on activities to reach group consensus. Resolve conflicts democratically and
-                ensure everyone has a great time.
-              </p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                {t('landing.activityVoting')}
+              </h3>
+              <p className="text-gray-600">{t('landing.activityVotingDesc')}</p>
             </div>
 
             {/* Feature 5 */}
@@ -136,11 +126,10 @@ export default function LandingPage() {
               <div className="inline-flex items-center justify-center w-12 h-12 bg-red-100 rounded-xl mb-4">
                 <Calendar className="w-6 h-6 text-red-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Smart Scheduling</h3>
-              <p className="text-gray-600">
-                AI considers travel time, opening hours, and optimal routing to create realistic
-                schedules that work.
-              </p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                {t('landing.smartScheduling')}
+              </h3>
+              <p className="text-gray-600">{t('landing.smartSchedulingDesc')}</p>
             </div>
 
             {/* Feature 6 */}
@@ -148,11 +137,8 @@ export default function LandingPage() {
               <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-100 rounded-xl mb-4">
                 <MapPin className="w-6 h-6 text-indigo-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Location-Aware</h3>
-              <p className="text-gray-600">
-                Get suggestions based on your destination with local insights, popular attractions,
-                and hidden gems.
-              </p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{t('landing.locationAware')}</h3>
+              <p className="text-gray-600">{t('landing.locationAwareDesc')}</p>
             </div>
           </div>
         </div>
@@ -162,8 +148,10 @@ export default function LandingPage() {
       <div className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">How It Works</h2>
-            <p className="text-xl text-gray-600">Three simple steps to your perfect itinerary</p>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              {t('landing.howItWorksTitle')}
+            </h2>
+            <p className="text-xl text-gray-600">{t('landing.howItWorksSubtitle')}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -172,11 +160,8 @@ export default function LandingPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 text-white rounded-full text-2xl font-bold mb-4">
                 1
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Tell Us Your Preferences</h3>
-              <p className="text-gray-600">
-                Share your destination, dates, group size, interests, and budget. The more we know,
-                the better your itinerary.
-              </p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{t('landing.step1Title')}</h3>
+              <p className="text-gray-600">{t('landing.step1Desc')}</p>
             </div>
 
             {/* Step 2 */}
@@ -184,11 +169,8 @@ export default function LandingPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-600 text-white rounded-full text-2xl font-bold mb-4">
                 2
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">AI Generates Your Plan</h3>
-              <p className="text-gray-600">
-                Our AI creates a personalized day-by-day itinerary with activities, timing, and cost
-                estimates in seconds.
-              </p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{t('landing.step2Title')}</h3>
+              <p className="text-gray-600">{t('landing.step2Desc')}</p>
             </div>
 
             {/* Step 3 */}
@@ -196,11 +178,8 @@ export default function LandingPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-green-600 text-white rounded-full text-2xl font-bold mb-4">
                 3
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Collaborate & Refine</h3>
-              <p className="text-gray-600">
-                Invite your travel companions, discuss options, vote on activities, and finalize
-                your perfect trip together.
-              </p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{t('landing.step3Title')}</h3>
+              <p className="text-gray-600">{t('landing.step3Desc')}</p>
             </div>
           </div>
         </div>
@@ -215,8 +194,8 @@ export default function LandingPage() {
             </div>
             <span className="ml-3 text-xl font-bold text-white">Wanderly</span>
           </div>
-          <p className="mb-4">AI-powered travel planning made simple</p>
-          <p className="text-sm">2025 Wanderly. All rights reserved.</p>
+          <p className="mb-4">{t('landing.footerTagline')}</p>
+          <p className="text-sm">{t('landing.footerRights')}</p>
         </div>
       </footer>
     </div>

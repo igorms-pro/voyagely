@@ -1,4 +1,5 @@
 import { useState, FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '../lib/store';
 import {
   X,
@@ -18,6 +19,7 @@ interface CreateActivityModalProps {
 }
 
 export default function CreateActivityModal({ tripId, onClose }: CreateActivityModalProps) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const createActivity = useStore((state) => state.createActivity);
@@ -54,7 +56,7 @@ export default function CreateActivityModal({ tripId, onClose }: CreateActivityM
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim()) {
-      setError('Title is required');
+      setError(t('activityModal.titleRequired'));
       return;
     }
 
@@ -94,7 +96,7 @@ export default function CreateActivityModal({ tripId, onClose }: CreateActivityM
       onClose();
     } catch (err: any) {
       console.error('Error creating activity:', err);
-      setError(err.message || 'Failed to create activity. Please try again.');
+      setError(err.message || t('errors.failedToCreateActivity'));
     } finally {
       setLoading(false);
     }
@@ -107,7 +109,7 @@ export default function CreateActivityModal({ tripId, onClose }: CreateActivityM
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center">
             <Plus className="w-6 h-6 text-blue-600 mr-2" />
-            <h2 className="text-2xl font-bold text-gray-900">Add Activity</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{t('activityModal.addActivity')}</h2>
           </div>
           <button
             onClick={onClose}
@@ -131,7 +133,7 @@ export default function CreateActivityModal({ tripId, onClose }: CreateActivityM
           {/* Title */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Title <span className="text-red-500">*</span>
+              {t('activityModal.title')} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -139,19 +141,21 @@ export default function CreateActivityModal({ tripId, onClose }: CreateActivityM
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-              placeholder="e.g., Visit Eiffel Tower"
+              placeholder={t('activityModal.titlePlaceholder')}
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t('activityModal.description')}
+            </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-              placeholder="Add details about this activity..."
+              placeholder={t('activityModal.descriptionPlaceholder')}
             />
           </div>
 
@@ -159,14 +163,14 @@ export default function CreateActivityModal({ tripId, onClose }: CreateActivityM
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <Tag className="w-4 h-4 inline mr-1" />
-              Category
+              {t('activityModal.category')}
             </label>
             <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
             >
-              <option value="">Select a category</option>
+              <option value="">{t('activityModal.selectCategory')}</option>
               {categoryOptions.map((cat) => (
                 <option key={cat} value={cat}>
                   {cat}
@@ -180,7 +184,7 @@ export default function CreateActivityModal({ tripId, onClose }: CreateActivityM
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Calendar className="w-4 h-4 inline mr-1" />
-                Date
+                {t('activityModal.date')}
               </label>
               <input
                 type="date"
@@ -192,7 +196,7 @@ export default function CreateActivityModal({ tripId, onClose }: CreateActivityM
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Clock className="w-4 h-4 inline mr-1" />
-                Start Time
+                {t('activityModal.startTime')}
               </label>
               <input
                 type="time"
@@ -202,7 +206,9 @@ export default function CreateActivityModal({ tripId, onClose }: CreateActivityM
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">End Time</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {t('activityModal.endTime')}
+              </label>
               <input
                 type="time"
                 value={formData.endTime}
@@ -217,7 +223,7 @@ export default function CreateActivityModal({ tripId, onClose }: CreateActivityM
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <DollarSign className="w-4 h-4 inline mr-1" />
-              Cost per Person (Optional)
+              {t('activityModal.costPerPerson')}
             </label>
             <div className="flex space-x-2">
               <select
@@ -246,7 +252,7 @@ export default function CreateActivityModal({ tripId, onClose }: CreateActivityM
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <MapPin className="w-4 h-4 inline mr-1" />
-                Latitude (Optional)
+                {t('activityModal.latitude')}
               </label>
               <input
                 type="number"
@@ -254,12 +260,12 @@ export default function CreateActivityModal({ tripId, onClose }: CreateActivityM
                 value={formData.lat}
                 onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                placeholder="e.g., 48.8566"
+                placeholder={t('activityModal.latitudePlaceholder')}
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Longitude (Optional)
+                {t('activityModal.longitude')}
               </label>
               <input
                 type="number"
@@ -267,14 +273,16 @@ export default function CreateActivityModal({ tripId, onClose }: CreateActivityM
                 value={formData.lon}
                 onChange={(e) => setFormData({ ...formData, lon: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                placeholder="e.g., 2.3522"
+                placeholder={t('activityModal.longitudePlaceholder')}
               />
             </div>
           </div>
 
           {/* Status */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t('activityModal.status')}
+            </label>
             <div className="grid grid-cols-3 gap-3">
               {(['proposed', 'confirmed', 'rejected'] as const).map((status) => (
                 <button
@@ -287,7 +295,7 @@ export default function CreateActivityModal({ tripId, onClose }: CreateActivityM
                       : 'border-gray-300 text-gray-700 hover:border-gray-400'
                   }`}
                 >
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                  {t(`activityModal.${status}`)}
                 </button>
               ))}
             </div>
@@ -301,7 +309,7 @@ export default function CreateActivityModal({ tripId, onClose }: CreateActivityM
               disabled={loading}
               className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition disabled:opacity-50"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
@@ -311,12 +319,12 @@ export default function CreateActivityModal({ tripId, onClose }: CreateActivityM
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Creating...
+                  {t('activityModal.creating')}
                 </>
               ) : (
                 <>
                   <Plus className="w-5 h-5 mr-2" />
-                  Create Activity
+                  {t('activityModal.createActivity')}
                 </>
               )}
             </button>

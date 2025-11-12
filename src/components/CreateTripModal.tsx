@@ -1,5 +1,6 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '../lib/store';
 import { generateItinerary, ItineraryRequest } from '../lib/openai-service';
 import {
@@ -18,6 +19,7 @@ interface CreateTripModalProps {
 }
 
 export default function CreateTripModal({ onClose }: CreateTripModalProps) {
+  const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,14 +43,14 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
   });
 
   const interestOptions = [
-    'Culture & Museums',
-    'Food & Dining',
-    'Nature & Outdoors',
-    'Adventure',
-    'Shopping',
-    'Nightlife',
-    'History',
-    'Relaxation',
+    'cultureMuseums',
+    'foodDining',
+    'natureOutdoors',
+    'adventure',
+    'shopping',
+    'nightlife',
+    'history',
+    'relaxation',
   ];
 
   const handleInterestToggle = (interest: string) => {
@@ -90,7 +92,20 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
         pace: formData.pace,
         budget: formData.budget ? parseInt(formData.budget) : undefined,
         currency: formData.currency,
-        interests: formData.interests,
+        interests: formData.interests.map((i) => {
+          // Map back to original format for API
+          const mapping: Record<string, string> = {
+            cultureMuseums: 'Culture & Museums',
+            foodDining: 'Food & Dining',
+            natureOutdoors: 'Nature & Outdoors',
+            adventure: 'Adventure',
+            shopping: 'Shopping',
+            nightlife: 'Nightlife',
+            history: 'History',
+            relaxation: 'Relaxation',
+          };
+          return mapping[i] || i;
+        }),
       };
 
       // Note: Activities creation will be handled in a future agent
@@ -102,7 +117,7 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
       onClose();
     } catch (err: any) {
       console.error('Error creating trip:', err);
-      setError(err.message || 'Failed to create trip. Please try again.');
+      setError(err.message || t('errors.failedToCreateAccount'));
     } finally {
       setLoading(false);
     }
@@ -115,7 +130,7 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center">
             <Sparkles className="w-6 h-6 text-blue-600 mr-2" />
-            <h2 className="text-2xl font-bold text-gray-900">Create Trip with AI</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{t('tripModal.createTripWithAI')}</h2>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
             <X className="w-6 h-6" />
@@ -136,7 +151,7 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <MapPin className="w-4 h-4 inline mr-1" />
-              Destination
+              {t('tripModal.destination')}
             </label>
             <input
               type="text"
@@ -144,7 +159,7 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
               onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-              placeholder="e.g., Paris, Tokyo, New York"
+              placeholder={t('tripModal.destinationPlaceholder')}
             />
           </div>
 
@@ -153,7 +168,7 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Calendar className="w-4 h-4 inline mr-1" />
-                Start Date
+                {t('tripModal.startDate')}
               </label>
               <input
                 type="date"
@@ -164,7 +179,9 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {t('tripModal.endDate')}
+              </label>
               <input
                 type="date"
                 value={formData.endDate}
@@ -180,7 +197,7 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <Users className="w-4 h-4 inline mr-1" />
-              Group Size
+              {t('tripModal.groupSize')}
             </label>
             <input
               type="number"
@@ -195,7 +212,9 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
 
           {/* Travel Pace */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Travel Pace</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t('tripModal.travelPace')}
+            </label>
             <div className="grid grid-cols-3 gap-3">
               {(['relaxed', 'balanced', 'packed'] as const).map((pace) => (
                 <button
@@ -208,7 +227,7 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
                       : 'border-gray-300 text-gray-700 hover:border-gray-400'
                   }`}
                 >
-                  {pace.charAt(0).toUpperCase() + pace.slice(1)}
+                  {t(`tripModal.${pace}`)}
                 </button>
               ))}
             </div>
@@ -218,7 +237,7 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <DollarSign className="w-4 h-4 inline mr-1" />
-              Budget per Person (Optional)
+              {t('tripModal.budgetPerPerson')}
             </label>
             <div className="flex space-x-2">
               <select
@@ -236,14 +255,16 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
                 value={formData.budget}
                 onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
                 className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                placeholder="1000"
+                placeholder={t('tripModal.budgetPlaceholder')}
               />
             </div>
           </div>
 
           {/* Interests */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Interests</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t('tripModal.interests')}
+            </label>
             <div className="grid grid-cols-2 gap-2">
               {interestOptions.map((interest) => (
                 <button
@@ -256,7 +277,7 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
                       : 'border-gray-300 text-gray-700 hover:border-gray-400'
                   }`}
                 >
-                  {interest}
+                  {t(`tripModal.${interest}`)}
                 </button>
               ))}
             </div>
@@ -269,7 +290,7 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
               onClick={onClose}
               className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
@@ -279,12 +300,12 @@ export default function CreateTripModal({ onClose }: CreateTripModalProps) {
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Generating Itinerary...
+                  {t('tripModal.generatingItinerary')}
                 </>
               ) : (
                 <>
                   <Sparkles className="w-5 h-5 mr-2" />
-                  Create Trip
+                  {t('tripModal.createTrip')}
                 </>
               )}
             </button>
