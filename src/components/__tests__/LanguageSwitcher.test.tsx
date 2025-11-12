@@ -8,8 +8,10 @@ vi.mock('react-i18next', () => ({
     t: (key: string) => key,
     i18n: {
       language: 'en',
-      changeLanguage: vi.fn(),
+      changeLanguage: vi.fn().mockResolvedValue(undefined),
       isInitialized: true,
+      on: vi.fn(),
+      off: vi.fn(),
     },
     ready: true,
   }),

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '../lib/store';
 import { Trip } from '../lib/mock-supabase';
 import { supabase } from '../lib/supabase';
@@ -19,12 +20,15 @@ import {
   ArrowUpDown,
 } from 'lucide-react';
 import CreateTripModal from '../components/CreateTripModal';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { ThemeToggle } from '../components/ThemeToggle';
 import { format } from 'date-fns';
 
 type StatusFilter = 'all' | 'planned' | 'locked' | 'archived';
 type SortOption = 'date-desc' | 'date-asc' | 'title-asc' | 'title-desc';
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -53,11 +57,11 @@ export default function DashboardPage() {
       await loadTrips();
     } catch (err: any) {
       console.error('Error loading trips:', err);
-      setError(err.message || 'Failed to load trips. Please refresh the page.');
+      setError(err.message || t('dashboard.errorLoadingTrips'));
     } finally {
       setLoading(false);
     }
-  }, [user, loadTrips]);
+  }, [user, loadTrips, t]);
 
   // Load member counts when trips change
   useEffect(() => {
@@ -200,7 +204,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Loading your trips...</p>
+          <p className="mt-4 text-gray-600">{t('dashboard.loadingTrips')}</p>
         </div>
       </div>
     );
@@ -213,13 +217,15 @@ export default function DashboardPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
             <AlertCircle className="w-8 h-8 text-red-600" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Error Loading Trips</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            {t('dashboard.errorLoadingTrips')}
+          </h3>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={loadTripsData}
             className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition"
           >
-            Try Again
+            {t('trip.tryAgain')}
           </button>
         </div>
       </div>
@@ -227,30 +233,36 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <div className="flex items-center justify-center w-10 h-10 bg-blue-600 rounded-xl">
+              <div className="flex items-center justify-center w-10 h-10 bg-blue-600 dark:bg-blue-500 rounded-xl">
                 <Plane className="w-6 h-6 text-white" />
               </div>
-              <h1 className="ml-3 text-xl font-bold text-gray-900">Wanderly</h1>
+              <h1 className="ml-3 text-xl font-bold text-gray-900 dark:text-gray-100">Wanderly</h1>
             </div>
 
             <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
+                <LanguageSwitcher variant="dropdown" size="md" />
+                <ThemeToggle />
+              </div>
               <div className="flex items-center space-x-2">
                 <img
                   src={user?.avatar_url}
                   alt={user?.display_name}
                   className="w-8 h-8 rounded-full"
                 />
-                <span className="text-sm font-medium text-gray-700">{user?.display_name}</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {user?.display_name}
+                </span>
               </div>
               <button
                 onClick={handleLogout}
-                className="text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100 transition"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
               >
                 <LogOut className="w-5 h-5" />
               </button>
@@ -263,12 +275,10 @@ export default function DashboardPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome back, {user?.display_name}!
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            {t('trip.welcomeBack', { name: user?.display_name })}
           </h2>
-          <p className="text-gray-600">
-            Plan your next adventure or continue working on your existing trips.
-          </p>
+          <p className="text-gray-600 dark:text-gray-300">{t('trip.planAdventure')}</p>
         </div>
 
         {/* Controls Section */}
@@ -277,25 +287,25 @@ export default function DashboardPage() {
           <div>
             <button
               onClick={() => setShowCreateTripModal(true)}
-              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition shadow-lg hover:shadow-xl"
+              className="inline-flex items-center px-6 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition shadow-lg hover:shadow-xl"
             >
               <Sparkles className="w-5 h-5 mr-2" />
-              Create Trip with AI
+              {t('trip.createTripWithAI')}
             </button>
           </div>
 
           {/* Search and Filters */}
-          <div className="bg-white rounded-2xl shadow-sm p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm dark:shadow-lg p-4">
             <div className="flex flex-col md:flex-row gap-4">
               {/* Search Input */}
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search trips by title or destination..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder={t('trip.searchPlaceholder')}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
@@ -304,14 +314,14 @@ export default function DashboardPage() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
+                  className="pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
                 >
-                  <option value="date-desc">Newest First</option>
-                  <option value="date-asc">Oldest First</option>
-                  <option value="title-asc">Title A-Z</option>
-                  <option value="title-desc">Title Z-A</option>
+                  <option value="date-desc">{t('trip.newestFirst')}</option>
+                  <option value="date-asc">{t('trip.oldestFirst')}</option>
+                  <option value="title-asc">{t('trip.titleAZ')}</option>
+                  <option value="title-desc">{t('trip.titleZA')}</option>
                 </select>
-                <ArrowUpDown className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                <ArrowUpDown className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5 pointer-events-none" />
               </div>
             </div>
 
@@ -321,41 +331,41 @@ export default function DashboardPage() {
                 onClick={() => setStatusFilter('all')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                   statusFilter === 'all'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-blue-600 dark:bg-blue-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
-                All
+                {t('trip.all')}
               </button>
               <button
                 onClick={() => setStatusFilter('planned')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                   statusFilter === 'planned'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-blue-600 dark:bg-blue-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
-                Planned
+                {t('trip.planned')}
               </button>
               <button
                 onClick={() => setStatusFilter('locked')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                   statusFilter === 'locked'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-blue-600 dark:bg-blue-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
-                Locked
+                {t('trip.locked')}
               </button>
               <button
                 onClick={() => setStatusFilter('archived')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                   statusFilter === 'archived'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-blue-600 dark:bg-blue-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
-                Archived
+                {t('trip.archived')}
               </button>
             </div>
           </div>
@@ -363,24 +373,22 @@ export default function DashboardPage() {
 
         {/* Trips Grid */}
         {filteredAndSortedTrips.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-              <Plane className="w-8 h-8 text-blue-600" />
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm dark:shadow-lg p-12 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4">
+              <Plane className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              {trips.length === 0 ? 'No trips yet' : 'No trips match your filters'}
+            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+              {trips.length === 0 ? t('trip.noTripsYet') : t('trip.noTripsMatch')}
             </h3>
-            <p className="text-gray-600 mb-6">
-              {trips.length === 0
-                ? 'Get started by creating your first trip with AI-powered itinerary generation!'
-                : 'Try adjusting your search or filter criteria.'}
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              {trips.length === 0 ? t('trip.getStartedMessage') : t('trip.tryAdjustingFilters')}
             </p>
             <button
               onClick={() => setShowCreateTripModal(true)}
-              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition"
+              className="inline-flex items-center px-6 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-700 dark:hover:bg-blue-600 transition"
             >
               <Plus className="w-5 h-5 mr-2" />
-              Create Your First Trip
+              {t('trip.createFirstTrip')}
             </button>
           </div>
         ) : (
@@ -389,21 +397,23 @@ export default function DashboardPage() {
               <div
                 key={trip.id}
                 onClick={() => handleTripClick(trip)}
-                className="bg-white rounded-2xl shadow-sm hover:shadow-md transition cursor-pointer overflow-hidden"
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm dark:shadow-lg hover:shadow-md dark:hover:shadow-xl transition cursor-pointer overflow-hidden"
               >
                 {/* Trip Image Placeholder */}
-                <div className="h-40 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <div className="h-40 bg-gradient-to-br from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700 flex items-center justify-center">
                   <MapPin className="w-12 h-12 text-white opacity-50" />
                 </div>
 
                 {/* Trip Info */}
                 <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{trip.title}</h3>
-                  <div className="flex items-center text-gray-600 mb-2">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                    {trip.title}
+                  </h3>
+                  <div className="flex items-center text-gray-600 dark:text-gray-300 mb-2">
                     <MapPin className="w-4 h-4 mr-2" />
                     <span className="text-sm">{trip.destination_text}</span>
                   </div>
-                  <div className="flex items-center text-gray-600 mb-2">
+                  <div className="flex items-center text-gray-600 dark:text-gray-300 mb-2">
                     <Calendar className="w-4 h-4 mr-2" />
                     <span className="text-sm">
                       {format(new Date(trip.start_date), 'MMM d')} -{' '}
@@ -412,11 +422,13 @@ export default function DashboardPage() {
                   </div>
 
                   {/* Member Count */}
-                  <div className="flex items-center text-gray-600 mb-4">
+                  <div className="flex items-center text-gray-600 dark:text-gray-300 mb-4">
                     <Users className="w-4 h-4 mr-2" />
                     <span className="text-sm">
-                      {tripMemberCounts[trip.id] || 0} member
-                      {(tripMemberCounts[trip.id] || 0) !== 1 ? 's' : ''}
+                      {tripMemberCounts[trip.id] || 0}{' '}
+                      {(tripMemberCounts[trip.id] || 0) === 1
+                        ? t('trip.member')
+                        : t('trip.members')}
                     </span>
                   </div>
 
@@ -425,13 +437,13 @@ export default function DashboardPage() {
                     <span
                       className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${
                         trip.status === 'planned'
-                          ? 'bg-blue-100 text-blue-700'
+                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                           : trip.status === 'locked'
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-gray-100 text-gray-700'
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                       }`}
                     >
-                      {trip.status.charAt(0).toUpperCase() + trip.status.slice(1)}
+                      {t(`trip.${trip.status}`)}
                     </span>
                   </div>
                 </div>

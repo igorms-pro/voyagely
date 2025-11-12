@@ -1,10 +1,13 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { useStore } from '../lib/store';
 import { Plane, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Layout } from '../components/Layout';
 
 export default function SignupPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -25,10 +28,10 @@ export default function SignupPage() {
   // Validate password strength
   const validatePassword = (password: string): { valid: boolean; message: string } => {
     if (password.length < 6) {
-      return { valid: false, message: 'Password must be at least 6 characters' };
+      return { valid: false, message: t('auth.passwordMinLength') };
     }
     if (password.length > 72) {
-      return { valid: false, message: 'Password must be less than 72 characters' };
+      return { valid: false, message: t('auth.passwordMaxLength') };
     }
     return { valid: true, message: '' };
   };
@@ -42,20 +45,20 @@ export default function SignupPage() {
 
     // Validate display name
     if (!displayName.trim()) {
-      setError('Display name is required');
+      setError(t('auth.displayNameRequired'));
       setLoading(false);
       return;
     }
 
     if (displayName.trim().length < 2) {
-      setError('Display name must be at least 2 characters');
+      setError(t('auth.displayNameMinLength'));
       setLoading(false);
       return;
     }
 
     // Validate email
     if (!validateEmail(email)) {
-      setError('Please enter a valid email address');
+      setError(t('auth.emailRequired'));
       setLoading(false);
       return;
     }
@@ -69,7 +72,7 @@ export default function SignupPage() {
     }
 
     try {
-      setLoadingStep('Creating your account...');
+      setLoadingStep(t('auth.creatingYourAccount'));
 
       // Sign up with Supabase (profile will be created by trigger)
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -86,34 +89,33 @@ export default function SignupPage() {
       if (authError) {
         // Handle specific Supabase errors
         if (authError.message.includes('already registered')) {
-          throw new Error('An account with this email already exists. Please sign in instead.');
+          throw new Error(t('auth.accountExists'));
         }
         if (authError.message.includes('Invalid email')) {
-          throw new Error('Please enter a valid email address');
+          throw new Error(t('auth.invalidEmail'));
         }
         if (authError.message.includes('Password')) {
-          throw new Error('Password does not meet requirements');
+          throw new Error(t('auth.passwordRequirements'));
         }
         throw authError;
       }
 
       if (!authData.user) {
-        throw new Error('No user returned from sign up. Please try again.');
+        throw new Error(t('auth.noUserReturned'));
       }
 
       // Check if email confirmation is required
       if (authData.user && !authData.session) {
         // Email confirmation is required
         setSuccess(true);
-        setLoadingStep('Please check your email to confirm your account');
+        setLoadingStep(t('auth.checkEmail'));
         setLoading(false);
 
         // Show success message and redirect to login after a delay
         setTimeout(() => {
           navigate('/login', {
             state: {
-              message:
-                'Account created! Please check your email to confirm your account before signing in.',
+              message: t('auth.accountCreatedMessage'),
             },
           });
         }, 3000);
@@ -121,7 +123,7 @@ export default function SignupPage() {
       }
 
       // If we have a session, proceed with profile creation check
-      setLoadingStep('Setting up your profile...');
+      setLoadingStep(t('auth.settingUpProfile'));
 
       // Get profile from profiles table (created by trigger)
       // The trigger should execute immediately, but we'll retry with exponential backoff
@@ -158,20 +160,18 @@ export default function SignupPage() {
         console.error('Profile not created after retries');
 
         // Try to refresh user from store (which will check profile)
-        setLoadingStep('Finalizing setup...');
+        setLoadingStep(t('auth.finalizingSetup'));
         await refreshUser();
 
         // Check if user is now set
         const { user } = useStore.getState();
         if (!user) {
-          throw new Error(
-            'Profile creation is taking longer than expected. Please try signing in - your account may have been created successfully.',
-          );
+          throw new Error(t('auth.profileCreationDelayed'));
         }
 
         // User is set, proceed to dashboard
         setSuccess(true);
-        setLoadingStep('Welcome! Redirecting...');
+        setLoadingStep(t('auth.welcomeRedirecting'));
         setTimeout(() => {
           navigate('/dashboard');
         }, 1000);
@@ -179,17 +179,17 @@ export default function SignupPage() {
       }
 
       // Profile exists, refresh user from store to ensure consistency
-      setLoadingStep('Finalizing setup...');
+      setLoadingStep(t('auth.finalizingSetup'));
       await refreshUser();
 
       // Verify user is set
       const { user } = useStore.getState();
       if (!user) {
-        throw new Error('Failed to load user profile. Please try signing in.');
+        throw new Error(t('auth.failedToLoadProfile'));
       }
 
       setSuccess(true);
-      setLoadingStep('Welcome! Redirecting...');
+      setLoadingStep(t('auth.welcomeRedirecting'));
 
       // Navigate to dashboard after a brief delay to show success
       setTimeout(() => {
@@ -199,7 +199,7 @@ export default function SignupPage() {
       console.error('Signup error:', err);
 
       // Provide user-friendly error messages
-      let errorMessage = 'Failed to create account';
+      let errorMessage = t('errors.failedToCreateAccount');
 
       if (err.message) {
         errorMessage = err.message;
@@ -217,143 +217,189 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        {/* Logo and Title */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4">
-            <Plane className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Join Wanderly</h1>
-          <p className="text-gray-600">Start planning amazing trips with AI assistance</p>
-        </div>
-
-        {/* Signup Form */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Create Account</h2>
-
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-start">
-              <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
-              <span>{error}</span>
+    <Layout showLanguageTheme={true}>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          {/* Logo and Title */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 dark:bg-blue-500 rounded-2xl mb-4">
+              <Plane className="w-8 h-8 text-white" />
             </div>
-          )}
-
-          {success && (
-            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm flex items-start">
-              <CheckCircle2 className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
-              <span>{loadingStep || 'Account created successfully!'}</span>
-            </div>
-          )}
-
-          {loading && loadingStep && (
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm flex items-center">
-              <Loader2 className="w-5 h-5 mr-2 animate-spin flex-shrink-0" />
-              <span>{loadingStep}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-2">
-                Display Name
-              </label>
-              <input
-                id="displayName"
-                type="text"
-                value={displayName}
-                onChange={(e) => {
-                  setDisplayName(e.target.value);
-                  setError(''); // Clear error when user types
-                }}
-                required
-                disabled={loading || success}
-                minLength={2}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:opacity-50 disabled:bg-gray-50"
-                placeholder="Your name"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setError(''); // Clear error when user types
-                }}
-                required
-                disabled={loading || success}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:opacity-50 disabled:bg-gray-50"
-                placeholder="you@example.com"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setError(''); // Clear error when user types
-                }}
-                required
-                disabled={loading || success}
-                minLength={6}
-                maxLength={72}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:opacity-50 disabled:bg-gray-50"
-                placeholder="At least 6 characters"
-              />
-              {password && (
-                <p className="mt-1 text-xs text-gray-500">
-                  {password.length < 6
-                    ? `${6 - password.length} more characters needed`
-                    : password.length > 72
-                      ? 'Password is too long'
-                      : 'Password looks good'}
-                </p>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading || success}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            <h1
+              className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2"
+              data-testid="signup-join-title"
             >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Creating account...
-                </>
-              ) : success ? (
-                <>
-                  <CheckCircle2 className="w-5 h-5 mr-2" />
-                  Account Created!
-                </>
-              ) : (
-                'Create Account'
-              )}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-gray-600">
-              Already have an account?{' '}
-              <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
-                Sign In
-              </Link>
+              {t('auth.joinTitle')}
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300" data-testid="signup-join-subtitle">
+              {t('auth.joinSubtitle')}
             </p>
+          </div>
+
+          {/* Signup Form */}
+          <div
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:shadow-2xl p-8"
+            data-testid="signup-form"
+          >
+            <h2
+              className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6"
+              data-testid="signup-form-title"
+            >
+              {t('auth.createAccount')}
+            </h2>
+
+            {error && (
+              <div
+                className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm flex items-start"
+                data-testid="signup-error-message"
+              >
+                <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {success && (
+              <div
+                className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 text-sm flex items-start"
+                data-testid="signup-success-message"
+              >
+                <CheckCircle2 className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
+                <span>{loadingStep || 'Account created successfully!'}</span>
+              </div>
+            )}
+
+            {loading && loadingStep && (
+              <div
+                className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-blue-700 dark:text-blue-400 text-sm flex items-center"
+                data-testid="signup-loading-message"
+              >
+                <Loader2 className="w-5 h-5 mr-2 animate-spin flex-shrink-0" />
+                <span>{loadingStep}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4" data-testid="signup-form-element">
+              <div>
+                <label
+                  htmlFor="displayName"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  {t('auth.displayName')}
+                </label>
+                <input
+                  id="displayName"
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => {
+                    setDisplayName(e.target.value);
+                    setError(''); // Clear error when user types
+                  }}
+                  required
+                  disabled={loading || success}
+                  minLength={2}
+                  data-testid="signup-display-name-input"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:opacity-50 disabled:bg-gray-50 dark:disabled:bg-gray-800"
+                  placeholder={t('auth.displayNamePlaceholder')}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  {t('auth.email')}
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError(''); // Clear error when user types
+                  }}
+                  required
+                  disabled={loading || success}
+                  data-testid="signup-email-input"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:opacity-50 disabled:bg-gray-50 dark:disabled:bg-gray-800"
+                  placeholder={t('auth.emailPlaceholder')}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  {t('auth.password')}
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setError(''); // Clear error when user types
+                  }}
+                  required
+                  disabled={loading || success}
+                  minLength={6}
+                  maxLength={72}
+                  data-testid="signup-password-input"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:opacity-50 disabled:bg-gray-50 dark:disabled:bg-gray-800"
+                  placeholder={t('auth.passwordMinLength')}
+                />
+                {password && (
+                  <p
+                    className="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                    data-testid="signup-password-hint"
+                  >
+                    {password.length < 6
+                      ? t('auth.passwordMoreChars', { count: 6 - password.length })
+                      : password.length > 72
+                        ? t('auth.passwordTooLong')
+                        : t('auth.passwordLooksGood')}
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || success}
+                data-testid="signup-submit-button"
+                className="w-full bg-blue-600 dark:bg-blue-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    {t('auth.creatingAccount')}
+                  </>
+                ) : success ? (
+                  <>
+                    <CheckCircle2 className="w-5 h-5 mr-2" />
+                    {t('auth.accountCreated')}
+                  </>
+                ) : (
+                  t('auth.createAccount')
+                )}
+              </button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <p className="text-gray-600 dark:text-gray-300">
+                {t('auth.alreadyHaveAccount')}{' '}
+                <Link
+                  to="/login"
+                  data-testid="signup-login-link"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+                >
+                  {t('auth.signIn')}
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }

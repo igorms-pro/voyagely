@@ -3,11 +3,15 @@ import { renderHook, act } from '@testing-library/react';
 import { useLanguage } from '../useLanguage';
 
 // Mock react-i18next
-const mockChangeLanguage = vi.fn();
+const mockChangeLanguage = vi.fn().mockResolvedValue(undefined);
+const mockOn = vi.fn();
+const mockOff = vi.fn();
 const mockI18n = {
   language: 'en',
   changeLanguage: mockChangeLanguage,
   isInitialized: true,
+  on: mockOn,
+  off: mockOff,
 };
 
 vi.mock('react-i18next', () => ({
@@ -32,7 +36,7 @@ describe('useLanguage', () => {
     const { result } = renderHook(() => useLanguage());
     expect(result.current.availableLanguages).toContain('en');
     expect(result.current.availableLanguages).toContain('fr');
-    expect(result.current.availableLanguages.length).toBeGreaterThan(10);
+    expect(result.current.availableLanguages.length).toBe(10);
   });
 
   it('changes language when changeLanguage is called', () => {

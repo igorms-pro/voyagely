@@ -1,64 +1,32 @@
 import { useTranslation } from 'react-i18next';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 
 export const useLanguage = () => {
   const { i18n, ready } = useTranslation();
+  const [, forceUpdate] = useState({});
 
   const availableLanguages = useMemo(
-    () =>
-      [
-        'en',
-        'fr',
-        'es',
-        'pt',
-        'pt-BR',
-        'ja',
-        'zh',
-        'de',
-        'it',
-        'ru',
-        'nl',
-        'ko',
-        'ar',
-        'tr',
-        'pl',
-        'sv',
-        'no',
-        'fi',
-        'cs',
-        'hu',
-        'vi',
-      ] as const,
+    () => ['en', 'fr', 'es', 'pt', 'pt-BR', 'ja', 'zh', 'de', 'it', 'ru'] as const,
     [],
   );
 
+  // Force re-render when language changes
+  useEffect(() => {
+    const handleLanguageChanged = () => {
+      forceUpdate({});
+    };
+    i18n.on('languageChanged', handleLanguageChanged);
+    return () => {
+      i18n.off('languageChanged', handleLanguageChanged);
+    };
+  }, [i18n]);
+
   const changeLanguage = useCallback(
-    (
-      language:
-        | 'en'
-        | 'fr'
-        | 'es'
-        | 'pt'
-        | 'pt-BR'
-        | 'ja'
-        | 'zh'
-        | 'de'
-        | 'it'
-        | 'ru'
-        | 'nl'
-        | 'ko'
-        | 'ar'
-        | 'tr'
-        | 'pl'
-        | 'sv'
-        | 'no'
-        | 'fi'
-        | 'cs'
-        | 'hu'
-        | 'vi',
-    ) => {
+    (language: 'en' | 'fr' | 'es' | 'pt' | 'pt-BR' | 'ja' | 'zh' | 'de' | 'it' | 'ru') => {
       if (ready && i18n.isInitialized) {
-        i18n.changeLanguage(language);
+        i18n.changeLanguage(language).catch((err) => {
+          console.error('Error changing language:', err);
+        });
       }
     },
     [i18n, ready],

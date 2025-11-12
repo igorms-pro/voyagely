@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '../lib/store';
 import { supabase } from '../lib/supabase';
 import { Activity, Vote, Trip, Message } from '../lib/mock-supabase';
@@ -39,6 +40,7 @@ import NearbyPlaces from '../components/NearbyPlaces';
 import CreateActivityModal from '../components/CreateActivityModal';
 
 export default function TripDetailPage() {
+  const { t } = useTranslation();
   const { tripId } = useParams<{ tripId: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -149,11 +151,11 @@ export default function TripDetailPage() {
       }
     } catch (err: any) {
       console.error('Error loading trip:', err);
-      setError(err.message || 'Failed to load trip. Please try again.');
+      setError(err.message || t('errors.failedToLoadTrip'));
     } finally {
       setLoading(false);
     }
-  }, [tripId, user, navigate, setCurrentTrip, loadActivities, loadVotes]);
+  }, [tripId, user, navigate, setCurrentTrip, loadActivities, loadVotes, t]);
 
   useEffect(() => {
     if (!user) {
@@ -317,14 +319,14 @@ export default function TripDetailPage() {
       await loadTripData();
     } catch (err: any) {
       console.error('Error updating trip:', err);
-      alert(err.message || 'Failed to update trip. Please try again.');
+      alert(err.message || t('errors.failedToUpdateTrip'));
     }
   };
 
   const handleDeleteTrip = async () => {
     if (!tripId || !currentTrip) return;
 
-    if (!confirm('Are you sure you want to delete this trip? This action cannot be undone.')) {
+    if (!confirm(t('tripDetail.confirmDelete'))) {
       return;
     }
 
@@ -334,7 +336,7 @@ export default function TripDetailPage() {
       navigate('/dashboard');
     } catch (err: any) {
       console.error('Error deleting trip:', err);
-      alert(err.message || 'Failed to delete trip. Please try again.');
+      alert(err.message || t('errors.failedToDeleteTrip'));
       setIsDeleting(false);
     }
   };
@@ -363,7 +365,7 @@ export default function TripDetailPage() {
       await createOrUpdateVote(activityId, choice);
     } catch (err: any) {
       console.error('Error voting:', err);
-      alert(err.message || 'Failed to vote. Please try again.');
+      alert(err.message || t('errors.failedToVote'));
     }
   };
 
@@ -408,10 +410,10 @@ export default function TripDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Loading trip...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-500"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">{t('tripDetail.loadingTrip')}</p>
         </div>
       </div>
     );
@@ -419,25 +421,27 @@ export default function TripDetailPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center max-w-md">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
-            <AlertCircle className="w-8 h-8 text-red-600" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full mb-4">
+            <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Error Loading Trip</h3>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            {t('tripDetail.errorLoadingTrip')}
+          </h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">{error}</p>
           <div className="flex space-x-3 justify-center">
             <button
               onClick={() => navigate('/dashboard')}
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition"
+              className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition"
             >
-              Back to Dashboard
+              {t('tripDetail.backToDashboard')}
             </button>
             <button
               onClick={loadTripData}
-              className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition"
+              className="px-6 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-700 dark:hover:bg-blue-600 transition"
             >
-              Try Again
+              {t('trip.tryAgain')}
             </button>
           </div>
         </div>
@@ -450,24 +454,24 @@ export default function TripDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <button
               onClick={() => navigate('/dashboard')}
-              className="flex items-center text-gray-600 hover:text-gray-900 transition"
+              className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
-              Back to Dashboard
+              {t('tripDetail.backToDashboard')}
             </button>
           </div>
         </div>
       </header>
 
       {/* Trip Hero */}
-      <div className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+      <div className="bg-gradient-to-br from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -478,14 +482,14 @@ export default function TripDetailPage() {
                     value={editForm.title}
                     onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                     className="w-full px-4 py-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white"
-                    placeholder="Trip title"
+                    placeholder={t('tripDetail.tripTitlePlaceholder')}
                   />
                   <input
                     type="text"
                     value={editForm.destination_text}
                     onChange={(e) => setEditForm({ ...editForm, destination_text: e.target.value })}
                     className="w-full px-4 py-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white"
-                    placeholder="Destination"
+                    placeholder={t('tripDetail.destinationPlaceholder')}
                   />
                   <div className="grid grid-cols-2 gap-4">
                     <input
@@ -507,7 +511,7 @@ export default function TripDetailPage() {
                       className="px-4 py-2 bg-white text-blue-600 rounded-lg font-medium hover:bg-gray-100 transition flex items-center"
                     >
                       <Save className="w-4 h-4 mr-2" />
-                      Save
+                      {t('tripDetail.save')}
                     </button>
                     <button
                       onClick={() => {
@@ -523,7 +527,7 @@ export default function TripDetailPage() {
                       className="px-4 py-2 bg-white/20 text-white rounded-lg font-medium hover:bg-white/30 transition flex items-center"
                     >
                       <X className="w-4 h-4 mr-2" />
-                      Cancel
+                      {t('tripDetail.cancel')}
                     </button>
                   </div>
                 </div>
@@ -542,7 +546,8 @@ export default function TripDetailPage() {
                     </div>
                     <div className="flex items-center">
                       <Users className="w-5 h-5 mr-2" />
-                      {tripMembers.length} member{tripMembers.length !== 1 ? 's' : ''}
+                      {tripMembers.length}{' '}
+                      {tripMembers.length === 1 ? t('tripDetail.member') : t('tripDetail.members')}
                     </div>
                   </div>
                 </>
@@ -556,7 +561,7 @@ export default function TripDetailPage() {
                     className="px-4 py-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg text-white hover:bg-white/30 transition flex items-center"
                   >
                     <Edit className="w-4 h-4 mr-2" />
-                    Edit
+                    {t('tripDetail.edit')}
                   </button>
                 )}
                 {canDelete() && (
@@ -566,7 +571,7 @@ export default function TripDetailPage() {
                     className="px-4 py-2 bg-red-500/80 backdrop-blur-sm border border-red-400/30 rounded-lg text-white hover:bg-red-600/80 transition flex items-center disabled:opacity-50"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
-                    {isDeleting ? 'Deleting...' : 'Delete'}
+                    {isDeleting ? t('tripDetail.deleting') : t('tripDetail.delete')}
                   </button>
                 )}
               </div>
@@ -576,29 +581,29 @@ export default function TripDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white border-b border-gray-200 sticky top-16 z-10">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-16 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex space-x-8 overflow-x-auto">
             <button
               onClick={() => setActiveTab('itinerary')}
               className={`py-4 px-2 border-b-2 font-medium transition whitespace-nowrap ${
                 activeTab === 'itinerary'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
-              Itinerary
+              {t('tripDetail.itinerary')}
             </button>
             <button
               onClick={() => setActiveTab('weather')}
               className={`py-4 px-2 border-b-2 font-medium transition whitespace-nowrap ${
                 activeTab === 'weather'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               <Cloud className="w-4 h-4 inline mr-2" />
-              Weather
+              {t('tripDetail.weather')}
             </button>
             <button
               onClick={() => setActiveTab('explore')}
@@ -609,7 +614,7 @@ export default function TripDetailPage() {
               }`}
             >
               <NavigationIcon className="w-4 h-4 inline mr-2" />
-              Explore
+              {t('tripDetail.explore')}
             </button>
             <button
               onClick={() => setActiveTab('chat')}
@@ -620,7 +625,7 @@ export default function TripDetailPage() {
               }`}
             >
               <MessageSquare className="w-4 h-4 inline mr-2" />
-              Chat
+              {t('tripDetail.chat')}
             </button>
           </div>
         </div>
@@ -643,42 +648,47 @@ export default function TripDetailPage() {
               <div className="flex justify-end">
                 <button
                   onClick={() => setShowAddActivityModal(true)}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition flex items-center shadow-sm"
+                  className="px-6 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-700 dark:hover:bg-blue-600 transition flex items-center shadow-sm"
                 >
                   <Plus className="w-5 h-5 mr-2" />
-                  Add Activity
+                  {t('tripDetail.addActivity')}
                 </button>
               </div>
             )}
 
             {sortedDates.length === 0 ? (
-              <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
-                <p className="text-gray-600 mb-4">No activities in this itinerary yet.</p>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm dark:shadow-lg p-12 text-center">
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  {t('tripDetail.noActivitiesYet')}
+                </p>
                 {canEdit() && (
                   <button
                     onClick={() => setShowAddActivityModal(true)}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition inline-flex items-center"
+                    className="px-6 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-700 dark:hover:bg-blue-600 transition inline-flex items-center"
                   >
                     <Plus className="w-5 h-5 mr-2" />
-                    Add Your First Activity
+                    {t('tripDetail.addFirstActivity')}
                   </button>
                 )}
               </div>
             ) : (
               sortedDates.map((date) => (
-                <div key={date} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <div
+                  key={date}
+                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm dark:shadow-lg overflow-hidden"
+                >
                   {/* Day Header */}
-                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 px-6 py-4 border-b border-gray-200">
-                    <h3 className="text-xl font-bold text-gray-900">
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                       {format(new Date(date), 'EEEE, MMMM d, yyyy')}
                     </h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {activitiesByDate[date].length} activities
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                      {activitiesByDate[date].length} {t('tripDetail.activities')}
                     </p>
                   </div>
 
                   {/* Activities */}
-                  <div className="divide-y divide-gray-100">
+                  <div className="divide-y divide-gray-100 dark:divide-gray-700">
                     {activitiesByDate[date]
                       .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''))
                       .map((activity) => {
@@ -686,23 +696,28 @@ export default function TripDetailPage() {
                         const userVote = getUserVote(activity.id);
 
                         return (
-                          <div key={activity.id} className="p-6 hover:bg-gray-50 transition">
+                          <div
+                            key={activity.id}
+                            className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
+                          >
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
                                 <div className="flex items-start justify-between mb-2">
                                   <div>
-                                    <h4 className="text-lg font-semibold text-gray-900 mb-1">
+                                    <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
                                       {activity.title}
                                     </h4>
-                                    <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
+                                    <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">
                                       {activity.category}
                                     </span>
                                   </div>
                                 </div>
 
-                                <p className="text-gray-600 mb-3">{activity.description}</p>
+                                <p className="text-gray-600 dark:text-gray-300 mb-3">
+                                  {activity.description}
+                                </p>
 
-                                <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+                                <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
                                   {activity.start_time && activity.end_time && (
                                     <div className="flex items-center">
                                       <Clock className="w-4 h-4 mr-1" />
@@ -737,13 +752,14 @@ export default function TripDetailPage() {
                                   {activity.cost_cents !== undefined && (
                                     <div className="flex items-center">
                                       <DollarSign className="w-4 h-4 mr-1" />$
-                                      {(activity.cost_cents / 100).toFixed(2)} per person
+                                      {(activity.cost_cents / 100).toFixed(2)}{' '}
+                                      {t('tripDetail.perPerson')}
                                     </div>
                                   )}
                                   {activity.source === 'ai' && (
-                                    <div className="flex items-center text-purple-600">
+                                    <div className="flex items-center text-purple-600 dark:text-purple-400">
                                       <Sparkles className="w-4 h-4 mr-1" />
-                                      AI Suggested
+                                      {t('tripDetail.aiSuggested')}
                                     </div>
                                   )}
                                 </div>
@@ -755,21 +771,21 @@ export default function TripDetailPage() {
                                   onClick={() => handleVote(activity.id, 'up')}
                                   className={`p-2 rounded-lg transition ${
                                     userVote === 'up'
-                                      ? 'bg-green-100 text-green-600'
-                                      : 'text-gray-400 hover:bg-gray-100 hover:text-green-600'
+                                      ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                                      : 'text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-green-600 dark:hover:text-green-400'
                                   }`}
                                 >
                                   <ThumbsUp className="w-5 h-5" />
                                 </button>
-                                <span className="text-sm font-medium text-gray-700">
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                   {upvotes - downvotes}
                                 </span>
                                 <button
                                   onClick={() => handleVote(activity.id, 'down')}
                                   className={`p-2 rounded-lg transition ${
                                     userVote === 'down'
-                                      ? 'bg-red-100 text-red-600'
-                                      : 'text-gray-400 hover:bg-gray-100 hover:text-red-600'
+                                      ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                                      : 'text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-red-600 dark:hover:text-red-400'
                                   }`}
                                 >
                                   <ThumbsDown className="w-5 h-5" />
