@@ -33,17 +33,6 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
     de: '🇩🇪',
     it: '🇮🇹',
     ru: '🇷🇺',
-    nl: '🇳🇱',
-    ko: '🇰🇷',
-    ar: '🇸🇦',
-    tr: '🇹🇷',
-    pl: '🇵🇱',
-    sv: '🇸🇪',
-    no: '🇳🇴',
-    fi: '🇫🇮',
-    cs: '🇨🇿',
-    hu: '🇭🇺',
-    vi: '🇻🇳',
   };
 
   const languageNames = {
@@ -57,17 +46,6 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
     de: 'DE',
     it: 'IT',
     ru: 'RU',
-    nl: 'NL',
-    ko: 'KO',
-    ar: 'AR',
-    tr: 'TR',
-    pl: 'PL',
-    sv: 'SV',
-    no: 'NO',
-    fi: 'FI',
-    cs: 'CS',
-    hu: 'HU',
-    vi: 'VI',
   };
 
   // Handle click outside to close dropdown
@@ -95,28 +73,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
   }
 
   const handleLanguageChange = (
-    language:
-      | 'en'
-      | 'fr'
-      | 'es'
-      | 'pt'
-      | 'pt-BR'
-      | 'ja'
-      | 'zh'
-      | 'de'
-      | 'it'
-      | 'ru'
-      | 'nl'
-      | 'ko'
-      | 'ar'
-      | 'tr'
-      | 'pl'
-      | 'sv'
-      | 'no'
-      | 'fi'
-      | 'cs'
-      | 'hu'
-      | 'vi',
+    language: 'en' | 'fr' | 'es' | 'pt' | 'pt-BR' | 'ja' | 'zh' | 'de' | 'it' | 'ru',
   ) => {
     changeLanguage(language);
     setIsOpen(false);
@@ -157,29 +114,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
   }
 
   // Button variant (cycle through languages)
-  const allLanguages = [
-    'en',
-    'fr',
-    'es',
-    'pt',
-    'pt-BR',
-    'ja',
-    'zh',
-    'de',
-    'it',
-    'ru',
-    'nl',
-    'ko',
-    'ar',
-    'tr',
-    'pl',
-    'sv',
-    'no',
-    'fi',
-    'cs',
-    'hu',
-    'vi',
-  ] as const;
+  const allLanguages = ['en', 'fr', 'es', 'pt', 'pt-BR', 'ja', 'zh', 'de', 'it', 'ru'] as const;
   const currentIndex = allLanguages.indexOf(currentLanguage as (typeof allLanguages)[number]);
   const nextLanguage = allLanguages[(currentIndex + 1) % allLanguages.length];
 

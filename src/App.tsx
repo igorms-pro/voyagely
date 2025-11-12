@@ -49,7 +49,7 @@ function App() {
   }, [initializeAuth, refreshUser]);
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="wanderly-theme">
       <PostHogProvider>
         <QueryClientProvider client={queryClient}>
           <Router>

@@ -19,19 +19,19 @@ describe('ThemeToggle', () => {
 
   it('renders theme toggle button', () => {
     render(<ThemeToggle />);
-    const button = screen.getByLabelText(/toggle theme/i);
+    const button = screen.getByLabelText(/switch to (dark|light) mode/i);
     expect(button).toBeInTheDocument();
   });
 
   it('shows moon icon in light mode', () => {
     render(<ThemeToggle />);
     // Moon icon should be visible in light mode (to switch to dark)
-    expect(screen.getByLabelText(/toggle theme/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/switch to dark mode/i)).toBeInTheDocument();
   });
 
   it('calls setTheme when clicked', () => {
     render(<ThemeToggle />);
-    const button = screen.getByLabelText(/toggle theme/i);
+    const button = screen.getByLabelText(/switch to dark mode/i);
 
     fireEvent.click(button);
 
