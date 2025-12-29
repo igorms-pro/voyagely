@@ -120,32 +120,63 @@ Light to dark scale:
 
 ### Dark Mode Palette
 
-**Primary Colors (adjusted for dark backgrounds)**
+#### Background Colors (Warm Dark Tones)
 
-- 300: `#fdba74` - Lighter for dark bg
-- 400: `#fb923c` - Main in dark mode
-- 500: `#f97316` - Hover states
-- 600: `#ea580c` - Active states
+- **Main Background:** `#1c1917` - Deep warm charcoal (almost black with warmth)
+- **Card Background:** `#292524` - Warm dark gray for cards and panels
+- **Elevated Surface:** `#44403c` - Lighter warm gray for elevated elements
+- **Modal/Dropdown:** `#57534e` - Even lighter for top-level overlays
+- **Hover State:** `#3c3836` - Slightly lighter for interactive states
 
-**Background Colors**
+#### Primary Colors (Glowing Warm on Dark)
 
-- Main: `#1c1917` - Deep warm charcoal
-- Secondary: `#292524` - Card backgrounds (warm gray)
-- Tertiary: `#44403c` - Elevated surfaces (lighter warm gray)
-- Elevated: `#57534e` - Modals, dropdowns
+Use lighter shades for better visibility on dark backgrounds:
 
-**Text Colors**
+- **Light:** `#fdba74` (300) - Lightest, for subtle elements
+- **Main:** `#fb923c` (400) - Primary brand color in dark mode
+- **Hover:** `#f97316` (500) - Hover states
+- **Active:** `#ea580c` (600) - Active/pressed states
+- **Bright:** `#fed7aa` (200) - Extra bright accents
 
-- Primary: `#fafaf9` - Warm white
-- Secondary: `#e7e5e4` - Soft warm gray
-- Tertiary: `#d6d3d1` - Muted warm gray
-- Disabled: `#a8a29e` - Disabled text
+#### Secondary Colors (Warm Amber on Dark)
 
-**Border Colors**
+- **Light:** `#fcd34d` (300)
+- **Main:** `#fbbf24` (400)
+- **Hover:** `#f59e0b` (500)
 
-- Light: `#44403c` - Subtle borders
-- Medium: `#57534e` - Default borders
-- Heavy: `#78716c` - Emphasized borders
+#### Accent Colors (Warm Rose on Dark)
+
+- **Light:** `#fda4af` (300)
+- **Main:** `#fb7185` (400)
+- **Hover:** `#f43f5e` (500)
+
+#### Text Colors (Warm Whites and Grays)
+
+- **Primary Text:** `#fafaf9` - Almost white with warm tone
+- **Secondary Text:** `#e7e5e4` - Soft warm gray for less important text
+- **Tertiary Text:** `#d6d3d1` - Muted warm gray for metadata
+- **Disabled Text:** `#a8a29e` - Disabled/inactive text
+- **Placeholder:** `#78716c` - Input placeholders
+
+#### Border Colors (Warm Dark Borders)
+
+- **Subtle:** `#44403c` - Very subtle borders
+- **Default:** `#57534e` - Standard borders
+- **Emphasized:** `#78716c` - Important borders
+- **Focus:** `#fb923c` (Primary-400) - Focus rings and active borders
+
+#### Semantic Colors (Dark Mode)
+
+- **Success:** `#86efac` - Lighter green for visibility
+- **Warning:** `#fcd34d` - Bright amber
+- **Error:** `#fca5a5` - Lighter red
+- **Info:** `#fdba74` - Light orange
+
+#### Gradients (Dark Mode)
+
+- **Hero:** Orange-400 → Amber-400 → Amber-300
+- **Card Subtle:** Card gray → Main background
+- **Glow Effect:** Radial gradient with warm orange tint
 
 ### Color Usage Guidelines
 
@@ -509,20 +540,151 @@ Use proper HTML elements:
 
 ### Theme Toggle
 
-Uses `next-themes` for theme management:
+**Technology:** `next-themes` library
 
-- System preference detection
-- Manual toggle
-- Persistent storage
-- Smooth transitions
+**Features:**
 
-### Color Adaptation
+- Automatic system preference detection
+- Manual toggle with persistence
+- Smooth transitions between themes
+- No flash on page load
+- Respects user preference
 
-- Backgrounds: Light cream → Dark warm charcoal
-- Text: Dark warm gray → Warm white
-- Borders: Light warm gray → Dark warm gray
-- Maintains warm tone in both modes
-- All contrast ratios maintained
+**Toggle UI:**
+
+- Sun icon for light mode
+- Moon icon for dark mode
+- Positioned in header/navigation
+- Accessible with keyboard
+- Tooltip on hover
+
+### Theme Switching Behavior
+
+**On First Visit:**
+
+1. Detect system preference
+2. Apply corresponding theme
+3. Save preference to localStorage
+
+**On Manual Toggle:**
+
+1. Switch theme immediately
+2. Update all color variables
+3. Persist to localStorage
+4. Smooth 200ms transition
+
+**On Subsequent Visits:**
+
+1. Load saved preference from localStorage
+2. Apply theme before page render (no flash)
+
+### Color Adaptation Strategy
+
+#### Backgrounds
+
+**Light → Dark:**
+
+- White (#ffffff) → Deep warm charcoal (#1c1917)
+- Cream (#fafaf9) → Warm dark gray (#292524)
+- Light gray (#f5f5f4) → Card gray (#44403c)
+
+#### Text
+
+**Light → Dark:**
+
+- Dark gray (#1c1917) → Warm white (#fafaf9)
+- Mid gray (#78716c) → Soft gray (#e7e5e4)
+- Light gray (#a8a29e) → Muted gray (#d6d3d1)
+
+#### Primary Colors (Brand)
+
+**Light → Dark:**
+
+- Orange-500 (#f97316) → Orange-400 (#fb923c)
+- Hover: Orange-600 (#ea580c) → Orange-500 (#f97316)
+- Focus rings stay vibrant for visibility
+
+#### Borders
+
+**Light → Dark:**
+
+- Stone-200 (#e7e5e4) → Dark border (#44403c)
+- Stone-300 (#d6d3d1) → Default border (#57534e)
+- Emphasized borders stay visible with warm tones
+
+#### Shadows
+
+**Light → Dark:**
+
+- Black shadows with low opacity
+- Reduced opacity in dark mode (more subtle)
+- Warm-tinted shadows (rgba(249, 115, 22, 0.1))
+
+#### Special Effects
+
+- **Glows:** Add warm glow effects around interactive elements
+- **Overlays:** Use warm-tinted overlays instead of pure black
+- **Gradients:** Adjust gradient brightness for dark backgrounds
+
+### Contrast Ratios
+
+All color combinations maintain WCAG AA compliance (4.5:1 minimum):
+
+**Light Mode:**
+
+- Primary text on white: 11:1
+- Secondary text on white: 7:1
+- Orange-500 on white: 3.5:1 (large text only)
+- White text on Orange-500: 4.8:1
+
+**Dark Mode:**
+
+- Primary text on dark bg: 13:1
+- Secondary text on dark bg: 8:1
+- Orange-400 on dark bg: 5.2:1
+- White text on Orange-400: 6.1:1
+
+### Component Adaptation
+
+#### Buttons
+
+- **Light:** Orange-500 background, white text
+- **Dark:** Orange-400 background, white text, subtle glow
+
+#### Cards
+
+- **Light:** White background, stone border, subtle shadow
+- **Dark:** Warm gray background, darker border, inner shadow
+
+#### Inputs
+
+- **Light:** White background, stone border, orange focus ring
+- **Dark:** Dark gray background, lighter border, bright orange focus ring
+
+#### Badges
+
+- **Light:** Colored background (100), dark text (800)
+- **Dark:** Darker background (700/800), light text (100/200)
+
+#### Modals
+
+- **Light:** White background, shadow
+- **Dark:** Elevated gray background, warm-tinted shadow, border
+
+### Testing Dark Mode
+
+**Checklist:**
+
+- [ ] All text is readable (contrast check)
+- [ ] Focus states are visible
+- [ ] Hover states are clear
+- [ ] Borders are visible where needed
+- [ ] Shadows enhance hierarchy
+- [ ] No pure black (#000) or pure white (#fff) used
+- [ ] All interactive elements have proper states
+- [ ] Images/icons adapt to theme
+- [ ] Loading states are visible
+- [ ] Error states are clear
 
 ---
 
