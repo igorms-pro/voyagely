@@ -10,7 +10,7 @@ import { Layout } from '../components/Layout';
 export default function LoginPage() {
   const { t } = useTranslation();
   // Default fake credentials
-  const [email, setEmail] = useState('demo@wanderly.com');
+  const [email, setEmail] = useState('demo@voyagely.com');
   const [password, setPassword] = useState('demo123');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);

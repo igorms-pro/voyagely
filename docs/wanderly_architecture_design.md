@@ -1,10 +1,10 @@
-# Wanderly: End-to-End Application Architecture and UI/UX Specification Blueprint
+# Voyagely: End-to-End Application Architecture and UI/UX Specification Blueprint
 
 ## Executive Summary and Product Scope
 
-Wanderly is a collaborative, AI-first travel planning platform that enables individuals and groups to create trips, generate day-by-day itineraries with AI, discuss options in real time, and vote to converge on a plan. The core value proposition is straightforward: reduce the cognitive load of planning, make collaboration effortless, and produce itineraries that are coherent, time-aware, and grounded in external context such as weather and place data.
+Voyagely is a collaborative, AI-first travel planning platform that enables individuals and groups to create trips, generate day-by-day itineraries with AI, discuss options in real time, and vote to converge on a plan. The core value proposition is straightforward: reduce the cognitive load of planning, make collaboration effortless, and produce itineraries that are coherent, time-aware, and grounded in external context such as weather and place data.
 
-The problem-solution fit is anchored in three user pain points. First, travel planning is fragmented across chat apps, spreadsheets, bookmarked pages, and static templates, which creates coordination overhead for friends, families, and colleagues. Second, most itinerary tools are either too rigid or too generic to reflect real constraints like travel time, weather, budget, or group preferences. Third, offline and poor connectivity realities break naïve real-time expectations, which挫eries collaboration experiences. Wanderly addresses these by combining a mobile-first user experience, AI itinerary generation with structured parsing and validation, and a real-time collaboration layer for chat, presence, and voting, all on a relational foundation that remains consistent under intermittent connectivity. The product’s differentiated AI experience is modeled after the direction of intent-driven personalization in travel, exemplified by industry leaders integrating large language models to accelerate discovery and decision-making for users[^1].
+The problem-solution fit is anchored in three user pain points. First, travel planning is fragmented across chat apps, spreadsheets, bookmarked pages, and static templates, which creates coordination overhead for friends, families, and colleagues. Second, most itinerary tools are either too rigid or too generic to reflect real constraints like travel time, weather, budget, or group preferences. Third, offline and poor connectivity realities break naïve real-time expectations, which挫eries collaboration experiences. Voyagely addresses these by combining a mobile-first user experience, AI itinerary generation with structured parsing and validation, and a real-time collaboration layer for chat, presence, and voting, all on a relational foundation that remains consistent under intermittent connectivity. The product’s differentiated AI experience is modeled after the direction of intent-driven personalization in travel, exemplified by industry leaders integrating large language models to accelerate discovery and decision-making for users[^1].
 
 The scope for version 1 (MVP) emphasizes reliability over breadth. The must-have capabilities include: authentication and profiles; trip creation with invite links and roles; day-by-day AI itinerary generation with basic safety checks; collaborative chat and presence; activity proposal and voting with tie-breakers; real-time updates; and a mobile-first responsive design. Should-have features include map views and place details, forecast overlays, richer preference memory, and deduplicated suggestions. Could-have enhancements include multi-modal routing, group call integrations, and analytics dashboards.
 
@@ -28,15 +28,15 @@ To illustrate the trust boundaries and access patterns, the following matrix sum
 
 ### Component Responsibilities and Trust Boundaries Matrix
 
-| Component | Responsibilities | Trust Boundary | Key Security Controls |
-|---|---|---|---|
-| Client SPA | Render UI, manage local state, offline caches, chat, presence, voting | Untrusted client environment | Auth tokens in memory/secure storage, short-lived tokens, input validation, CSP, offline data encryption |
-| Realtime Layer | WebSocket connections, channels, presence, broadcast, DB change streams | Network boundary with client | Channel authorization, role checks, per-trip scoping, rate limiting, encrypted transport[^2][^3] |
-| Auth Service | Signup/login, social auth, session management | App boundary | OAuth/OIDC integration, MFA optional, secure cookie flags, token rotation |
-| Business Logic Services | Trip management, AI orchestration, external API proxies | App boundary | Per-row authorization (RLS), policy enforcement, input/output schemas, rate limiting |
-| Database (Postgres) | Users, trips, itineraries, activities, votes, messages | Trusted data boundary | RLS policies, encryption at rest, backups, audit logging |
-| External APIs | Maps, routing, weather, places | Third-party boundary | API key vaulting, quotas, caching, circuit breakers |
-| Notifications | In-app alerts, email/SMS/push (optional) | App boundary | Preference-driven delivery, throttling, audit trails |
+| Component               | Responsibilities                                                        | Trust Boundary               | Key Security Controls                                                                                    |
+| ----------------------- | ----------------------------------------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Client SPA              | Render UI, manage local state, offline caches, chat, presence, voting   | Untrusted client environment | Auth tokens in memory/secure storage, short-lived tokens, input validation, CSP, offline data encryption |
+| Realtime Layer          | WebSocket connections, channels, presence, broadcast, DB change streams | Network boundary with client | Channel authorization, role checks, per-trip scoping, rate limiting, encrypted transport[^2][^3]         |
+| Auth Service            | Signup/login, social auth, session management                           | App boundary                 | OAuth/OIDC integration, MFA optional, secure cookie flags, token rotation                                |
+| Business Logic Services | Trip management, AI orchestration, external API proxies                 | App boundary                 | Per-row authorization (RLS), policy enforcement, input/output schemas, rate limiting                     |
+| Database (Postgres)     | Users, trips, itineraries, activities, votes, messages                  | Trusted data boundary        | RLS policies, encryption at rest, backups, audit logging                                                 |
+| External APIs           | Maps, routing, weather, places                                          | Third-party boundary         | API key vaulting, quotas, caching, circuit breakers                                                      |
+| Notifications           | In-app alerts, email/SMS/push (optional)                                | App boundary                 | Preference-driven delivery, throttling, audit trails                                                     |
 
 This separation clarifies that the client is treated as untrusted for authorization decisions; all sensitive enforcement remains server-side via row-level security (RLS) and policy checks. Realtime channels provide efficient distribution and presence, but policy enforcement occurs at the data and service layers[^2][^3].
 
@@ -50,55 +50,55 @@ The schema draws on travel data modeling principles—configurable products, gro
 
 The following table outlines major entities and selected attributes with types and constraints. It is a representative subset to illuminate design decisions; full specifications should be implemented during build.
 
-| Entity | Selected Attributes | Type/Constraints | Notes |
-|---|---|---|---|
-| users | id, email, display_name, avatar_url, locale, timezone, created_at, updated_at, deleted_at | UUID; email unique; timestamps; soft delete | Profiles store preferences minimally; consent captured via events |
-| trips | id, owner_id, title, destination_text, start_date, end_date, status (planned, locked, archived), budget_cents, currency, created_at, updated_at, deleted_at | FK owner_id → users; status enum; dates; soft delete | Collaborative trips with invite links; owner may delegate |
-| trip_members | id, trip_id, user_id, role (owner, editor, viewer, moderator), invited_by, joined_at, removed_at | FKs → trips/users; role enum; timestamps; unique(trip_id, user_id) | Role-based access; preserved history |
-| itineraries | id, trip_id, version, title, generated_by_ai, created_at, updated_at, deleted_at | FK trip_id; version integer; AI flag | Supports AI version snapshots and human edits |
-| itinerary_days | id, itinerary_id, day_index, date, created_at, updated_at, deleted_at | FK itinerary_id; day_index; date | Day granularity for scheduling |
-| activities | id, itinerary_day_id, trip_id, place_id, title, description, category, start_time, end_time, cost_cents, currency, lat, lon, status (proposed, confirmed), source (manual, ai, import), created_at, updated_at, deleted_at | FK itinerary_day_id, trip_id; status enum; geolocation optional | AI-generated activities flagged for traceability |
-| votes | id, activity_id, user_id, choice (up, down), idempotency_key, created_at | FK activity_id, user_id; unique(idempotency_key) | Tie-breakers use tie_break_rules on trip |
-| messages | id, trip_id, user_id, content, message_type (text, system, attachment), client_msg_id, reply_to, created_at, updated_at, deleted_at | FK trip_id, user_id; content text; client-side ID for dedup | Real-time chat with presence and history |
-| invitations | id, trip_id, inviter_id, invite_code, expires_at, max_uses, used_count, created_at | FK trip_id; unique(invite_code) | Shareable links; usage limited |
-| audit_logs | id, actor_id, target_type, target_id, action, metadata, created_at | FK actor_id; JSON metadata | Comprehensive action logging |
-| preferences (user) | user_id, travel_style, pace, dietary_restrictions, accessibility_needs, preferred_transport | FK user_id; JSON | Preference memory for AI personalization |
-| weather_cache | place_id, lat, lon, forecast_time, payload_json, fetched_at | Geohash/time index | Cached weather payloads for offline resilience |
-| places_cache | place_id, provider, name, categories, lat, lon, score, payload_json, fetched_at | Unique(provider, place_id) | Map place details and categories |
+| Entity             | Selected Attributes                                                                                                                                                                                                        | Type/Constraints                                                   | Notes                                                             |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| users              | id, email, display_name, avatar_url, locale, timezone, created_at, updated_at, deleted_at                                                                                                                                  | UUID; email unique; timestamps; soft delete                        | Profiles store preferences minimally; consent captured via events |
+| trips              | id, owner_id, title, destination_text, start_date, end_date, status (planned, locked, archived), budget_cents, currency, created_at, updated_at, deleted_at                                                                | FK owner_id → users; status enum; dates; soft delete               | Collaborative trips with invite links; owner may delegate         |
+| trip_members       | id, trip_id, user_id, role (owner, editor, viewer, moderator), invited_by, joined_at, removed_at                                                                                                                           | FKs → trips/users; role enum; timestamps; unique(trip_id, user_id) | Role-based access; preserved history                              |
+| itineraries        | id, trip_id, version, title, generated_by_ai, created_at, updated_at, deleted_at                                                                                                                                           | FK trip_id; version integer; AI flag                               | Supports AI version snapshots and human edits                     |
+| itinerary_days     | id, itinerary_id, day_index, date, created_at, updated_at, deleted_at                                                                                                                                                      | FK itinerary_id; day_index; date                                   | Day granularity for scheduling                                    |
+| activities         | id, itinerary_day_id, trip_id, place_id, title, description, category, start_time, end_time, cost_cents, currency, lat, lon, status (proposed, confirmed), source (manual, ai, import), created_at, updated_at, deleted_at | FK itinerary_day_id, trip_id; status enum; geolocation optional    | AI-generated activities flagged for traceability                  |
+| votes              | id, activity_id, user_id, choice (up, down), idempotency_key, created_at                                                                                                                                                   | FK activity_id, user_id; unique(idempotency_key)                   | Tie-breakers use tie_break_rules on trip                          |
+| messages           | id, trip_id, user_id, content, message_type (text, system, attachment), client_msg_id, reply_to, created_at, updated_at, deleted_at                                                                                        | FK trip_id, user_id; content text; client-side ID for dedup        | Real-time chat with presence and history                          |
+| invitations        | id, trip_id, inviter_id, invite_code, expires_at, max_uses, used_count, created_at                                                                                                                                         | FK trip_id; unique(invite_code)                                    | Shareable links; usage limited                                    |
+| audit_logs         | id, actor_id, target_type, target_id, action, metadata, created_at                                                                                                                                                         | FK actor_id; JSON metadata                                         | Comprehensive action logging                                      |
+| preferences (user) | user_id, travel_style, pace, dietary_restrictions, accessibility_needs, preferred_transport                                                                                                                                | FK user_id; JSON                                                   | Preference memory for AI personalization                          |
+| weather_cache      | place_id, lat, lon, forecast_time, payload_json, fetched_at                                                                                                                                                                | Geohash/time index                                                 | Cached weather payloads for offline resilience                    |
+| places_cache       | place_id, provider, name, categories, lat, lon, score, payload_json, fetched_at                                                                                                                                            | Unique(provider, place_id)                                         | Map place details and categories                                  |
 
 ### Relationship and Cascade Rules
 
 Foreign key and cascade rules are chosen to preserve history and prevent accidental data loss while avoiding orphaned rows. Soft deletes allow retrieval of trip timelines without exposing deprecated items. The following table highlights key relationships and actions.
 
-| Relationship | FK | On Delete | On Update | Rationale |
-|---|---|---|---|---|
-| trips.owner_id → users | trips.owner_id | RESTRICT | CASCADE | Prevent deleting trips via user removal; transfer ownership explicitly |
-| trip_members.trip_id → trips | trip_members.trip_id | CASCADE (soft delete) | CASCADE | Remove membership records logically with trips; preserve history with deleted_at |
-| trip_members.user_id → users | trip_members.user_id | RESTRICT | CASCADE | Prevent removing users while still members; archive trips first |
-| itineraries.trip_id → trips | itineraries.trip_id | CASCADE (soft delete) | CASCADE | Itineraries scoped to trips; soft delete for version history |
-| itinerary_days.itinerary_id → itineraries | itinerary_days.itinerary_id | CASCADE | CASCADE | Days belong to itinerary; cascade ensures clean removal |
-| activities.itinerary_day_id → itinerary_days | activities.itinerary_day_id | SET NULL | CASCADE | Retain activity if day removed; assign manually orAI reattach |
-| votes.activity_id → activities | votes.activity_id | CASCADE | CASCADE | Remove votes with activity; prevents orphaned votes |
-| messages.trip_id → trips | messages.trip_id | CASCADE (soft delete) | CASCADE | Chat scoped to trip; soft delete to preserve context |
-| messages.user_id → users | messages.user_id | SET NULL | CASCADE | Preserve message authorship metadata if user deleted |
+| Relationship                                 | FK                          | On Delete             | On Update | Rationale                                                                        |
+| -------------------------------------------- | --------------------------- | --------------------- | --------- | -------------------------------------------------------------------------------- |
+| trips.owner_id → users                       | trips.owner_id              | RESTRICT              | CASCADE   | Prevent deleting trips via user removal; transfer ownership explicitly           |
+| trip_members.trip_id → trips                 | trip_members.trip_id        | CASCADE (soft delete) | CASCADE   | Remove membership records logically with trips; preserve history with deleted_at |
+| trip_members.user_id → users                 | trip_members.user_id        | RESTRICT              | CASCADE   | Prevent removing users while still members; archive trips first                  |
+| itineraries.trip_id → trips                  | itineraries.trip_id         | CASCADE (soft delete) | CASCADE   | Itineraries scoped to trips; soft delete for version history                     |
+| itinerary_days.itinerary_id → itineraries    | itinerary_days.itinerary_id | CASCADE               | CASCADE   | Days belong to itinerary; cascade ensures clean removal                          |
+| activities.itinerary_day_id → itinerary_days | activities.itinerary_day_id | SET NULL              | CASCADE   | Retain activity if day removed; assign manually orAI reattach                    |
+| votes.activity_id → activities               | votes.activity_id           | CASCADE               | CASCADE   | Remove votes with activity; prevents orphaned votes                              |
+| messages.trip_id → trips                     | messages.trip_id            | CASCADE (soft delete) | CASCADE   | Chat scoped to trip; soft delete to preserve context                             |
+| messages.user_id → users                     | messages.user_id            | SET NULL              | CASCADE   | Preserve message authorship metadata if user deleted                             |
 
 ### RLS Policy Matrix
 
 Row-level security is mandatory for all trip-scoped tables. Policies ensure that only authorized members can read or modify data and that roles constrain write capabilities. The matrix below provides a pattern for policy application.
 
-| Table | Policy Condition | Roles | Permissions |
-|---|---|---|---|
-| trips | EXISTS trip_members WHERE trip_id = trips.id AND user_id = auth.uid() | owner, editor, viewer, moderator | Read |
-| trips | auth.uid() = owner_id OR (EXISTS trip_members WHERE trip_id = trips.id AND user_id = auth.uid() AND role IN ('editor','moderator')) | owner, editor, moderator | Write |
-| itineraries | Trip membership as above | owner, editor, viewer, moderator | Read |
-| itineraries | auth.uid() = owner_id OR role IN ('editor','moderator') | owner, editor, moderator | Write |
-| activities | Trip membership as above | owner, editor, viewer, moderator | Read |
-| activities | role IN ('editor','moderator','owner') | owner, editor, moderator | Write |
-| votes | Trip membership as above for associated trip | owner, editor, viewer, moderator | Read |
-| votes | auth.uid() = user_id | owner, editor, viewer, moderator | Insert (own votes); Update restricted; Delete by moderator/owner |
-| messages | Trip membership as above | owner, editor, viewer, moderator | Read |
-| messages | role IN ('editor','moderator','owner') OR auth.uid() = user_id | owner, editor, moderator, viewer | Insert; Update own; Delete by moderator/owner |
-| invitations | Trip membership as above | owner, moderator | Read/Write |
+| Table       | Policy Condition                                                                                                                    | Roles                            | Permissions                                                      |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------- |
+| trips       | EXISTS trip_members WHERE trip_id = trips.id AND user_id = auth.uid()                                                               | owner, editor, viewer, moderator | Read                                                             |
+| trips       | auth.uid() = owner_id OR (EXISTS trip_members WHERE trip_id = trips.id AND user_id = auth.uid() AND role IN ('editor','moderator')) | owner, editor, moderator         | Write                                                            |
+| itineraries | Trip membership as above                                                                                                            | owner, editor, viewer, moderator | Read                                                             |
+| itineraries | auth.uid() = owner_id OR role IN ('editor','moderator')                                                                             | owner, editor, moderator         | Write                                                            |
+| activities  | Trip membership as above                                                                                                            | owner, editor, viewer, moderator | Read                                                             |
+| activities  | role IN ('editor','moderator','owner')                                                                                              | owner, editor, moderator         | Write                                                            |
+| votes       | Trip membership as above for associated trip                                                                                        | owner, editor, viewer, moderator | Read                                                             |
+| votes       | auth.uid() = user_id                                                                                                                | owner, editor, viewer, moderator | Insert (own votes); Update restricted; Delete by moderator/owner |
+| messages    | Trip membership as above                                                                                                            | owner, editor, viewer, moderator | Read                                                             |
+| messages    | role IN ('editor','moderator','owner') OR auth.uid() = user_id                                                                      | owner, editor, moderator, viewer | Insert; Update own; Delete by moderator/owner                    |
+| invitations | Trip membership as above                                                                                                            | owner, moderator                 | Read/Write                                                       |
 
 Indexes support typical query patterns: trip membership joins, chronological activity listings, and chat message retrieval. Composite indexes on (trip_id, created_at) for messages and activities, and (activity_id, created_at) for votes, are recommended. Additionally, unique constraints (e.g., idempotency_key on votes) prevent duplicate actions during retries.
 
@@ -114,26 +114,26 @@ The following table enumerates auth flows and success paths:
 
 ### Auth Flows vs Steps vs Success Paths
 
-| Flow | Steps | Success Path | Notes |
-|---|---|---|---|
-| Email/Password | Signup → Email verification → Password set → Session creation | Redirect to dashboard | Lockout on repeated failures; rate limiting on signup |
-| Magic Link | Request link → Email delivery → Link click → Session creation | Redirect to dashboard | Time-limited tokens; replay detection |
-| Social (OIDC) | Redirect to provider → Consent → Callback exchange → Session creation | Redirect to dashboard | Scopes minimal; account linking via verified email |
+| Flow           | Steps                                                                 | Success Path          | Notes                                                 |
+| -------------- | --------------------------------------------------------------------- | --------------------- | ----------------------------------------------------- |
+| Email/Password | Signup → Email verification → Password set → Session creation         | Redirect to dashboard | Lockout on repeated failures; rate limiting on signup |
+| Magic Link     | Request link → Email delivery → Link click → Session creation         | Redirect to dashboard | Time-limited tokens; replay detection                 |
+| Social (OIDC)  | Redirect to provider → Consent → Callback exchange → Session creation | Redirect to dashboard | Scopes minimal; account linking via verified email    |
 
 Role-based access is enforced through trip membership roles: owner, editor, viewer, and moderator. The mapping clarifies permissions across features:
 
 ### Trip Roles vs Permissions
 
-| Feature | Owner | Editor | Viewer | Moderator |
-|---|---|---|---|---|
-| View trip | Yes | Yes | Yes | Yes |
-| Invite members | Yes | No | No | Yes |
-| Remove members | Yes | No | No | Yes |
-| Edit itinerary | Yes | Yes | No | Yes |
-| Propose activities | Yes | Yes | No | Yes |
-| Vote | Yes | Yes | Yes | Yes |
-| Moderate chat | Yes | No | No | Yes |
-| Lock plan | Yes | Yes (if delegated) | No | Yes |
+| Feature            | Owner | Editor             | Viewer | Moderator |
+| ------------------ | ----- | ------------------ | ------ | --------- |
+| View trip          | Yes   | Yes                | Yes    | Yes       |
+| Invite members     | Yes   | No                 | No     | Yes       |
+| Remove members     | Yes   | No                 | No     | Yes       |
+| Edit itinerary     | Yes   | Yes                | No     | Yes       |
+| Propose activities | Yes   | Yes                | No     | Yes       |
+| Vote               | Yes   | Yes                | Yes    | Yes       |
+| Moderate chat      | Yes   | No                 | No     | Yes       |
+| Lock plan          | Yes   | Yes (if delegated) | No     | Yes       |
 
 ## AI Itinerary Generation Workflow (OpenAI Integration)
 
@@ -147,32 +147,32 @@ The prompt template variables and constraints are cataloged below:
 
 ### Prompt Template Variables and Constraints Catalog
 
-| Variable | Description | Constraints |
-|---|---|---|
-| destination | City, region, or coordinates | Required; normalize to canonical place |
-| start_date / end_date | Trip window | Required; end_date ≥ start_date |
-| group_size | Number of travelers | Required; integer |
-| group_composition | Adults, children, seniors | Optional; counts by age band |
-| pace | Relaxed, balanced, packed | Optional; defaults to balanced |
-| budget_cents / currency | Overall budget and currency | Optional; currency ISO code |
-| dietary_restrictions | Vegan, gluten-free, allergies | Optional; list |
-| accessibility_needs | Mobility, vision, hearing | Optional; list |
-| preferences | Interests (museums, hiking, food) | Optional; weighted |
-| weather_context | Forecast per day | Optional; include severe alerts |
-| must_see | Hard constraints | Optional; list of places |
-| transport_mode | Walking, transit, driving | Optional; affects routing and timing |
+| Variable                | Description                       | Constraints                            |
+| ----------------------- | --------------------------------- | -------------------------------------- |
+| destination             | City, region, or coordinates      | Required; normalize to canonical place |
+| start_date / end_date   | Trip window                       | Required; end_date ≥ start_date        |
+| group_size              | Number of travelers               | Required; integer                      |
+| group_composition       | Adults, children, seniors         | Optional; counts by age band           |
+| pace                    | Relaxed, balanced, packed         | Optional; defaults to balanced         |
+| budget_cents / currency | Overall budget and currency       | Optional; currency ISO code            |
+| dietary_restrictions    | Vegan, gluten-free, allergies     | Optional; list                         |
+| accessibility_needs     | Mobility, vision, hearing         | Optional; list                         |
+| preferences             | Interests (museums, hiking, food) | Optional; weighted                     |
+| weather_context         | Forecast per day                  | Optional; include severe alerts        |
+| must_see                | Hard constraints                  | Optional; list of places               |
+| transport_mode          | Walking, transit, driving         | Optional; affects routing and timing   |
 
 The workflow handles provider errors with structured fallbacks:
 
 ### AI Error Taxonomy and Fallback Strategy
 
-| Error Class | Examples | Strategy |
-|---|---|---|
-| Rate limit | 429 responses | Exponential backoff; queue; degrade to cached suggestions |
-| Provider timeout | Network timeout | Retry with jitter; partial regeneration for missing days |
-| Schema mismatch | Missing fields | Regenerate affected sections; prompt for clarifications |
-| Policy violation | Unsafe content | Reject; log; trigger moderation; suggest alternatives |
-| Partial invalid | Time conflicts, impossible transitions | Auto-correct using solver; mark items for review |
+| Error Class      | Examples                               | Strategy                                                  |
+| ---------------- | -------------------------------------- | --------------------------------------------------------- |
+| Rate limit       | 429 responses                          | Exponential backoff; queue; degrade to cached suggestions |
+| Provider timeout | Network timeout                        | Retry with jitter; partial regeneration for missing days  |
+| Schema mismatch  | Missing fields                         | Regenerate affected sections; prompt for clarifications   |
+| Policy violation | Unsafe content                         | Reject; log; trigger moderation; suggest alternatives     |
+| Partial invalid  | Time conflicts, impossible transitions | Auto-correct using solver; mark items for review          |
 
 ### Prompt Engineering and Safety
 
@@ -192,24 +192,24 @@ Feature-to-screen mappings clarify the main surfaces:
 
 ### Features vs Screens/Components Mapping
 
-| Feature | Screen(s) | Key Components |
-|---|---|---|
-| Trip creation | Create Trip Wizard | Destination input, date pickers, privacy toggle, invite options |
-| Invite | Share Trip Sheet | Invite link, role selector, copy/share actions |
-| Itinerary day | Day Plan View | Day header, activity list, map mini-view, sticky add button |
-| Activity proposal | Add Activity Sheet | Place search, manual entry, notes, time picker, cost input |
-| Voting | Activity Card | Up/Down buttons, vote count, tie-breaker indicator |
-| Chat | Trip Chat | Message list, composer, presence avatars, thread reply |
-| Explore | Explore | Map, filters, place cards, weather overlay toggle |
-| Profile | Profile | User info, preferences, device management, settings |
+| Feature           | Screen(s)          | Key Components                                                  |
+| ----------------- | ------------------ | --------------------------------------------------------------- |
+| Trip creation     | Create Trip Wizard | Destination input, date pickers, privacy toggle, invite options |
+| Invite            | Share Trip Sheet   | Invite link, role selector, copy/share actions                  |
+| Itinerary day     | Day Plan View      | Day header, activity list, map mini-view, sticky add button     |
+| Activity proposal | Add Activity Sheet | Place search, manual entry, notes, time picker, cost input      |
+| Voting            | Activity Card      | Up/Down buttons, vote count, tie-breaker indicator              |
+| Chat              | Trip Chat          | Message list, composer, presence avatars, thread reply          |
+| Explore           | Explore            | Map, filters, place cards, weather overlay toggle               |
+| Profile           | Profile            | User info, preferences, device management, settings             |
 
 ### Voting States, Rules, and UI Indicators
 
-| State | Rule | UI Indicator |
-|---|---|---|
-| Proposed | Default when added | Badge “Proposed”; count “0” |
-| Tied | Upvotes = downvotes | Badge “Tie”; prompt to discuss |
-| Accepted | Upvotes > downvotes and quorum met | Badge “Accepted”; activity highlighted |
+| State    | Rule                               | UI Indicator                                  |
+| -------- | ---------------------------------- | --------------------------------------------- |
+| Proposed | Default when added                 | Badge “Proposed”; count “0”                   |
+| Tied     | Upvotes = downvotes                | Badge “Tie”; prompt to discuss                |
+| Accepted | Upvotes > downvotes and quorum met | Badge “Accepted”; activity highlighted        |
 | Rejected | Downvotes > upvotes and quorum met | Badge “Rejected”; grayed out; hide by default |
 
 ### Accessibility Considerations (MVP Targets)
@@ -230,25 +230,25 @@ Channel naming conventions and event contracts clarify topic structure:
 
 ### Realtime Channels and Events Catalog
 
-| Channel | Event | Payload Schema | Consumers |
-|---|---|---|---|
-| trip:{id}:chat | message.new | { id, user_id, content, message_type, client_msg_id, reply_to, created_at } | Trip members |
-| trip:{id}:presence | presence.sync | [{ user_id, meta }] | Trip members |
-| trip:{id}:vote | vote.cast | { id, activity_id, user_id, choice, idempotency_key, created_at } | Trip members |
-| trip:{id}:activity | activity.updated | { id, itinerary_day_id, trip_id, changes, updated_by, updated_at } | Trip members |
-| db:public:activities | * | Postgres change event | Clients subscribed to trip via policy |
-| realtime.messages | broadcast | JSON payload per partition | Clients with channel authorization |
+| Channel              | Event            | Payload Schema                                                              | Consumers                             |
+| -------------------- | ---------------- | --------------------------------------------------------------------------- | ------------------------------------- |
+| trip:{id}:chat       | message.new      | { id, user_id, content, message_type, client_msg_id, reply_to, created_at } | Trip members                          |
+| trip:{id}:presence   | presence.sync    | [{ user_id, meta }]                                                         | Trip members                          |
+| trip:{id}:vote       | vote.cast        | { id, activity_id, user_id, choice, idempotency_key, created_at }           | Trip members                          |
+| trip:{id}:activity   | activity.updated | { id, itinerary_day_id, trip_id, changes, updated_by, updated_at }          | Trip members                          |
+| db:public:activities | \*               | Postgres change event                                                       | Clients subscribed to trip via policy |
+| realtime.messages    | broadcast        | JSON payload per partition                                                  | Clients with channel authorization    |
 
 ### Presence State and Metadata
 
-| Field | Description |
-|---|---|
-| user_id | User identifier |
-| display_name | Current display name |
-| role | Trip role |
-| last_seen | Timestamp of last activity |
-| device | Client device metadata |
-| cursor | Optional chat cursor position |
+| Field        | Description                   |
+| ------------ | ----------------------------- |
+| user_id      | User identifier               |
+| display_name | Current display name          |
+| role         | Trip role                     |
+| last_seen    | Timestamp of last activity    |
+| device       | Client device metadata        |
+| cursor       | Optional chat cursor position |
 
 ### Ordering, Idempotency, and Consistency
 
@@ -258,40 +258,40 @@ Offline chat uses an outbox pattern: messages are queued locally and sent when c
 
 ## Mobile-First Responsive Design
 
-Wanderly adopts a mobile-first approach with progressive enhancement for larger screens. Layouts scale from single-column mobile views to multi-panel desktop experiences, with content prioritized for constrained screens. Navigation patterns include bottom tabs for primary sections and a drawer for secondary features on larger viewports. Key screens adapt fluidly: trip creation and activity sheets prioritize simplicity, while day plans and chat benefit from sticky actions and slim action bars.
+Voyagely adopts a mobile-first approach with progressive enhancement for larger screens. Layouts scale from single-column mobile views to multi-panel desktop experiences, with content prioritized for constrained screens. Navigation patterns include bottom tabs for primary sections and a drawer for secondary features on larger viewports. Key screens adapt fluidly: trip creation and activity sheets prioritize simplicity, while day plans and chat benefit from sticky actions and slim action bars.
 
 Forms use input masks, inline validation, and clear error messages, with accessible labels and hints. Interaction feedback includes loading skeletons, optimistic UI updates, and subtle haptics where supported. Design tokens define spacing, typography, and color semantics; component libraries cover cards, lists, sheets, modals, date/time pickers, and chat bubbles. These principles follow mobile-first best practices emphasizing content-first design and progressive enhancement[^9][^10][^11].
 
 ### Responsive Breakpoints and Layout Behavior
 
-| Breakpoint | Layout | Navigation |
-|---|---|---|
-| ≤480px (mobile) | Single column | Bottom tabs; sticky FAB for add |
-| 481–768px (phablet) | Single column with expanded cards | Bottom tabs + drawer for secondary |
-| 769–1024px (tablet) | Two-column (chat + day plan) | Top bar + drawer; side-by-side lists |
-| ≥1025px (desktop) | Multi-panel (trip list, chat, itinerary) | Persistent left nav; context panels |
+| Breakpoint          | Layout                                   | Navigation                           |
+| ------------------- | ---------------------------------------- | ------------------------------------ |
+| ≤480px (mobile)     | Single column                            | Bottom tabs; sticky FAB for add      |
+| 481–768px (phablet) | Single column with expanded cards        | Bottom tabs + drawer for secondary   |
+| 769–1024px (tablet) | Two-column (chat + day plan)             | Top bar + drawer; side-by-side lists |
+| ≥1025px (desktop)   | Multi-panel (trip list, chat, itinerary) | Persistent left nav; context panels  |
 
 ### Form Controls and Validation Rules Catalog
 
-| Control | Attributes | Validation |
-|---|---|---|
-| Destination input | Place search, geolocation | Required; canonical place |
-| Date picker | Start/end dates | Required; end ≥ start |
-| Time picker | 24h/12h | Required for activities |
-| Budget | Amount, currency | Non-negative; currency ISO |
-| Notes | Free text | Length limits; moderation |
-| Invite | Email/username | Existing user check; rate limit |
+| Control           | Attributes                | Validation                      |
+| ----------------- | ------------------------- | ------------------------------- |
+| Destination input | Place search, geolocation | Required; canonical place       |
+| Date picker       | Start/end dates           | Required; end ≥ start           |
+| Time picker       | 24h/12h                   | Required for activities         |
+| Budget            | Amount, currency          | Non-negative; currency ISO      |
+| Notes             | Free text                 | Length limits; moderation       |
+| Invite            | Email/username            | Existing user check; rate limit |
 
 ### Core Component Library Inventory
 
-| Component | Props | States | Accessibility Notes |
-|---|---|---|---|
-| Card | title, subtitle, media | Hover, focus, selected | Role=article; headings |
-| List | items, actions | Loading, empty | List semantics; keyboard nav |
-| Sheet | content, actions | Open, close, drag | Dialog role; focus trap |
-| Modal | title, body | Open, close | ARIA labelledby |
-| Date/Time picker | value, min/max | Invalid, range | Labels; keyboard accessible |
-| Chat bubble | author, content | Edited, deleted | Role=article; readable contrast |
+| Component        | Props                  | States                 | Accessibility Notes             |
+| ---------------- | ---------------------- | ---------------------- | ------------------------------- |
+| Card             | title, subtitle, media | Hover, focus, selected | Role=article; headings          |
+| List             | items, actions         | Loading, empty         | List semantics; keyboard nav    |
+| Sheet            | content, actions       | Open, close, drag      | Dialog role; focus trap         |
+| Modal            | title, body            | Open, close            | ARIA labelledby                 |
+| Date/Time picker | value, min/max         | Invalid, range         | Labels; keyboard accessible     |
+| Chat bubble      | author, content        | Edited, deleted        | Role=article; readable contrast |
 
 ### Accessibility Targets (MVP)
 
@@ -305,21 +305,21 @@ External API calls are proxied through backend services to protect API keys, man
 
 ### External API Catalog
 
-| Provider | Endpoints | Data | Rate Limits | Caching Strategy |
-|---|---|---|---|---|
-| HERE | Geocoding, Places, Routing | Coordinates, POI, directions | Per contract | Cache POI and routes per trip window[^12] |
-| Weather Company | Current, forecast, alerts | Temperature, precipitation, severe alerts | Per contract | Cache forecast per day; TTL aligned to provider update cadence[^13] |
-| Google Weather | AI forecasts, hourly/daily | Weather overlays and data | Per contract | Cache daily aggregates; fallback snapshots[^14] |
-| Travel APIs (various) | Flights, hotels, attractions | Rates, availability, reviews | Per contract | Cache static metadata; short TTL for dynamic rates[^15] |
+| Provider              | Endpoints                    | Data                                      | Rate Limits  | Caching Strategy                                                    |
+| --------------------- | ---------------------------- | ----------------------------------------- | ------------ | ------------------------------------------------------------------- |
+| HERE                  | Geocoding, Places, Routing   | Coordinates, POI, directions              | Per contract | Cache POI and routes per trip window[^12]                           |
+| Weather Company       | Current, forecast, alerts    | Temperature, precipitation, severe alerts | Per contract | Cache forecast per day; TTL aligned to provider update cadence[^13] |
+| Google Weather        | AI forecasts, hourly/daily   | Weather overlays and data                 | Per contract | Cache daily aggregates; fallback snapshots[^14]                     |
+| Travel APIs (various) | Flights, hotels, attractions | Rates, availability, reviews              | Per contract | Cache static metadata; short TTL for dynamic rates[^15]             |
 
 ### Rate Limiting and Backoff Policies per Provider
 
-| Provider | Rate Limit Strategy | Backoff |
-|---|---|---|
-| HERE | Token bucket per endpoint; burst allowed | Exponential with jitter; max retry caps |
-| Weather Company | Sliding window per API key | Exponential with token refill; circuit breaker |
-| Google Weather | Sliding window; quota alerts | Exponential; failover to cached snapshots |
-| Travel APIs | Endpoint-specific | Exponential; degrade features gracefully |
+| Provider        | Rate Limit Strategy                      | Backoff                                        |
+| --------------- | ---------------------------------------- | ---------------------------------------------- |
+| HERE            | Token bucket per endpoint; burst allowed | Exponential with jitter; max retry caps        |
+| Weather Company | Sliding window per API key               | Exponential with token refill; circuit breaker |
+| Google Weather  | Sliding window; quota alerts             | Exponential; failover to cached snapshots      |
+| Travel APIs     | Endpoint-specific                        | Exponential; degrade features gracefully       |
 
 ### Key Management and Secret Rotation
 
@@ -330,30 +330,30 @@ External API calls are proxied through backend services to protect API keys, man
 
 ## Privacy, Security, and Compliance
 
-Wanderly implements privacy-by-design with data minimization, explicit consent capture, and configurable retention policies. PII is restricted to necessary fields and encrypted at rest and in transit. Audit logging captures key actions for traceability and forensics, including role changes, vote actions, and message moderation. Data subject rights are supported through export and deletion workflows that respect legal retention requirements. Trip data supports export to portable formats and controlled deletion for departed members, ensuring group context is preserved for remaining members.
+Voyagely implements privacy-by-design with data minimization, explicit consent capture, and configurable retention policies. PII is restricted to necessary fields and encrypted at rest and in transit. Audit logging captures key actions for traceability and forensics, including role changes, vote actions, and message moderation. Data subject rights are supported through export and deletion workflows that respect legal retention requirements. Trip data supports export to portable formats and controlled deletion for departed members, ensuring group context is preserved for remaining members.
 
 RLS policies enforce per-row authorization for trip-scoped tables, and all Realtime channel joins are authorized against membership and roles. Secure coding practices include input validation, output encoding, content security policy (CSP), and rate limiting. Incident response playbooks cover detection, containment, notification, and postmortem processes.
 
 ### Data Categories vs Storage vs Retention vs Encryption
 
-| Data Category | Stored | Retention | Encryption |
-|---|---|---|---|
-| PII (email, name) | Yes | Active + limited archival | At rest + TLS |
-| Preferences | Yes | Active | At rest + TLS |
-| Trip content (itineraries, activities) | Yes | Active + archival (user opt-in) | At rest + TLS |
-| Messages | Yes (with soft delete) | Active + configurable | At rest + TLS |
-| Votes | Yes | Active + archival | At rest + TLS |
-| Audit logs | Yes | As per policy | At rest + TLS |
+| Data Category                          | Stored                 | Retention                       | Encryption    |
+| -------------------------------------- | ---------------------- | ------------------------------- | ------------- |
+| PII (email, name)                      | Yes                    | Active + limited archival       | At rest + TLS |
+| Preferences                            | Yes                    | Active                          | At rest + TLS |
+| Trip content (itineraries, activities) | Yes                    | Active + archival (user opt-in) | At rest + TLS |
+| Messages                               | Yes (with soft delete) | Active + configurable           | At rest + TLS |
+| Votes                                  | Yes                    | Active + archival               | At rest + TLS |
+| Audit logs                             | Yes                    | As per policy                   | At rest + TLS |
 
 ### Audit Events Catalog
 
-| Action | Target | Metadata | Retention |
-|---|---|---|---|
-| Role change | Trip member | actor, target_role, reason | As per policy |
-| Vote cast | Activity | user_id, choice, idempotency_key | As per policy |
-| Message moderation | Message | moderator_id, action | As per policy |
-| Invite created/used | Trip | inviter_id, code, uses | As per policy |
-| Plan lock | Trip | actor_id, version | As per policy |
+| Action              | Target      | Metadata                         | Retention     |
+| ------------------- | ----------- | -------------------------------- | ------------- |
+| Role change         | Trip member | actor, target_role, reason       | As per policy |
+| Vote cast           | Activity    | user_id, choice, idempotency_key | As per policy |
+| Message moderation  | Message     | moderator_id, action             | As per policy |
+| Invite created/used | Trip        | inviter_id, code, uses           | As per policy |
+| Plan lock           | Trip        | actor_id, version                | As per policy |
 
 Consent records capture legal basis, timestamp, and scope, stored as immutable events. Deletion workflows propagate to ensure that user-driven deletions do not corrupt group histories, using soft delete markers where necessary.
 
@@ -365,13 +365,13 @@ Operational playbooks cover scaling Realtime connections (e.g., region-aware rou
 
 ### SLI/SLO Definitions and Thresholds
 
-| SLI | Definition | SLO Target (Initial) | Notes |
-|---|---|---|---|
-| Chat p95 latency | Time from send to render | ≤1s on good networks | Cellular variability recognized |
-| Realtime connect success | Successful WS connection rate | ≥99% per region | Backoff with jitter |
-| AI generation success | Completed valid plans | ≥95% | Fallbacks improve resilience |
-| DB query latency | p95 for core reads | ≤300 ms | Indexing and query optimization |
-| External API error rate | Provider failures | ≤2% | Circuit breakers and cache |
+| SLI                      | Definition                    | SLO Target (Initial) | Notes                           |
+| ------------------------ | ----------------------------- | -------------------- | ------------------------------- |
+| Chat p95 latency         | Time from send to render      | ≤1s on good networks | Cellular variability recognized |
+| Realtime connect success | Successful WS connection rate | ≥99% per region      | Backoff with jitter             |
+| AI generation success    | Completed valid plans         | ≥95%                 | Fallbacks improve resilience    |
+| DB query latency         | p95 for core reads            | ≤300 ms              | Indexing and query optimization |
+| External API error rate  | Provider failures             | ≤2%                  | Circuit breakers and cache      |
 
 ## Roadmap and Phased Delivery
 
@@ -383,17 +383,17 @@ Rollout strategies include dark launches, feature flags, staged region releases,
 
 ### Feature-by-Phase Matrix
 
-| Feature | Phase | Dependencies | Acceptance Criteria |
-|---|---|---|---|
-| Auth + Profiles | 0 | Database, Realtime | Signup/login flows; session security; profile edit |
-| Trips + Chat | 0 | Auth, RLS | Trip creation; real-time chat; presence; per-row auth |
-| Itinerary Views | 0 | Trips, DB | Day listings; read performance; offline cache |
-| AI Itinerary | 1 | Trips, Profiles | Valid JSON; time sanity; persistence; audit trail |
-| Voting | 2 | Chat, Itinerary | Up/down; quorum; tie-breakers; dedup |
-| Moderation | 2 | Chat, Voting | Delete/flag actions; audit logs |
-| Maps + Routing | 3 | External APIs | Place search; directions; offline caches |
-| Weather Overlay | 3 | External APIs | Current + forecast; severe alerts; caching |
-| Personalization | 4 | Preferences, Events | Recommendation catalogue mapping; improved plans |
+| Feature         | Phase | Dependencies        | Acceptance Criteria                                   |
+| --------------- | ----- | ------------------- | ----------------------------------------------------- |
+| Auth + Profiles | 0     | Database, Realtime  | Signup/login flows; session security; profile edit    |
+| Trips + Chat    | 0     | Auth, RLS           | Trip creation; real-time chat; presence; per-row auth |
+| Itinerary Views | 0     | Trips, DB           | Day listings; read performance; offline cache         |
+| AI Itinerary    | 1     | Trips, Profiles     | Valid JSON; time sanity; persistence; audit trail     |
+| Voting          | 2     | Chat, Itinerary     | Up/down; quorum; tie-breakers; dedup                  |
+| Moderation      | 2     | Chat, Voting        | Delete/flag actions; audit logs                       |
+| Maps + Routing  | 3     | External APIs       | Place search; directions; offline caches              |
+| Weather Overlay | 3     | External APIs       | Current + forecast; severe alerts; caching            |
+| Personalization | 4     | Preferences, Events | Recommendation catalogue mapping; improved plans      |
 
 ## Appendices
 
@@ -429,22 +429,22 @@ Rollout strategies include dark launches, feature flags, staged region releases,
 
 ### Canonical Message Payloads and Events
 
-| Event | Fields |
-|---|---|
-| message.new | id, trip_id, user_id, content, message_type, client_msg_id, reply_to, created_at |
-| presence.sync | [{ user_id, meta }] |
-| vote.cast | id, activity_id, user_id, choice, idempotency_key, created_at |
-| activity.updated | id, itinerary_day_id, trip_id, changes, updated_by, updated_at |
+| Event            | Fields                                                                           |
+| ---------------- | -------------------------------------------------------------------------------- |
+| message.new      | id, trip_id, user_id, content, message_type, client_msg_id, reply_to, created_at |
+| presence.sync    | [{ user_id, meta }]                                                              |
+| vote.cast        | id, activity_id, user_id, choice, idempotency_key, created_at                    |
+| activity.updated | id, itinerary_day_id, trip_id, changes, updated_by, updated_at                   |
 
 ### Enumerations Catalog
 
-| Enum | Values |
-|---|---|
-| trip.status | planned, locked, archived |
-| role | owner, editor, viewer, moderator |
-| activity.status | proposed, confirmed, rejected |
-| message.type | text, system, attachment |
-| vote.choice | up, down |
+| Enum            | Values                           |
+| --------------- | -------------------------------- |
+| trip.status     | planned, locked, archived        |
+| role            | owner, editor, viewer, moderator |
+| activity.status | proposed, confirmed, rejected    |
+| message.type    | text, system, attachment         |
+| vote.choice     | up, down                         |
 
 These schemas and payloads enable consistent implementations across clients and services while ensuring real-time events can be processed reliably under varying network conditions.
 
@@ -453,19 +453,35 @@ These schemas and payloads enable consistent implementations across clients and 
 ## References
 
 [^1]: Booking.com and OpenAI personalize travel at scale. https://openai.com/index/booking-com/
+
 [^2]: Realtime Architecture | Supabase Docs. https://supabase.com/docs/guides/realtime/architecture
+
 [^3]: Realtime | Supabase Docs. https://supabase.com/docs/guides/realtime
+
 [^4]: Efficient Data Structures for the Travel Industry: Key Design Principles. https://vecton.pl/2024/06/02/efficient-data-structures-for-the-travel-industry-key-design-principles/
+
 [^5]: How to Design a Database for Booking and Reservation Systems. https://www.geeksforgeeks.org/dbms/how-to-design-a-database-for-booking-and-reservation-systems/
+
 [^6]: Seven essential database schema best practices | Fivetran. https://www.fivetran.com/blog/database-schema-best-practices
+
 [^7]: Generative AI in Travel: A Measured Look at the Tourism Industry | AltexSoft. https://www.altexsoft.com/blog/generative-ai-travel/
+
 [^8]: How to Design a Travel App UI/UX & Case Study. https://fuselabcreative.com/how-to-design-a-travel-app-ui-ux/
+
 [^9]: A Hands-On Guide to Mobile-First Responsive Design. https://www.uxpin.com/studio/blog/a-hands-on-guide-to-mobile-first-design/
+
 [^10]: Mobile-First Design: Examples + Strategies | Figma. https://www.figma.com/resource-library/mobile-first-design/
+
 [^11]: Mobile App UX Principles | Think with Google. https://www.thinkwithgoogle.com/_qs/documents/2081/Mobile_App_UX_Principles_3.pdf
+
 [^12]: HERE REST APIs | Maps, Routing and More. https://www.here.com/developer/rest-apis
+
 [^13]: Weather Data APIs: Real-Time & Historical | The Weather Company. https://www.weathercompany.com/weather-data-apis/
+
 [^14]: Weather API: AI Forecasts, Data & Insights | Google Maps Platform. https://mapsplatform.google.com/maps-products/weather/
+
 [^15]: Travel APIs: Types, Providers and Integration | AltexSoft. https://www.altexsoft.com/blog/travel-and-booking-apis-for-online-travel-and-tourism-service-providers/
+
 [^16]: Database Schema for Itinerary - Stack Overflow. https://stackoverflow.com/questions/27644540/database-schema-for-itinerary
+
 [^17]: Building Real-Time Apps with Supabase: A Step-by-Step Guide. https://www.supadex.app/blog/building-real-time-apps-with-supabase-a-step-by-step-guide

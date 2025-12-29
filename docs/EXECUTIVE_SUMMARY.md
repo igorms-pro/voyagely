@@ -1,8 +1,8 @@
-# Wanderly: Executive Summary
+# Voyagely: Executive Summary
 
 ## Product Vision
 
-Wanderly is an AI-powered collaborative travel planning platform that transforms how individuals and groups plan trips. By combining advanced AI itinerary generation with real-time collaboration tools, Wanderly eliminates the fragmentation and coordination overhead that currently plagues travel planning.
+Voyagely is an AI-powered collaborative travel planning platform that transforms how individuals and groups plan trips. By combining advanced AI itinerary generation with real-time collaboration tools, Voyagely eliminates the fragmentation and coordination overhead that currently plagues travel planning.
 
 ## Problem Statement
 
@@ -23,7 +23,7 @@ The travel planning market is ripe for disruption. Modern travelers expect:
 
 ## Solution
 
-Wanderly addresses these challenges through three core pillars:
+Voyagely addresses these challenges through three core pillars:
 
 ### 1. AI-Powered Itinerary Generation
 
@@ -65,7 +65,7 @@ Wanderly addresses these challenges through three core pillars:
 ## Competitive Advantages
 
 1. **AI-First Approach**: Not just a static template—dynamic, intelligent generation
-2. **Real-Time Collaboration**: Unlike async tools, Wanderly enables live coordination
+2. **Real-Time Collaboration**: Unlike async tools, Voyagely enables live coordination
 3. **Context-Aware**: Integrates weather, places, routing for realistic plans
 4. **Mobile-First**: Designed for on-the-go planning and coordination
 5. **Open Architecture**: Extensible platform ready for additional integrations
@@ -236,7 +236,7 @@ Wanderly addresses these challenges through three core pillars:
 
 ## Conclusion
 
-Wanderly represents a significant opportunity to modernize travel planning through AI and real-time collaboration. With a complete technical foundation, clear product vision, and defined go-to-market strategy, the platform is positioned to capture significant market share in the growing travel tech sector.
+Voyagely represents a significant opportunity to modernize travel planning through AI and real-time collaboration. With a complete technical foundation, clear product vision, and defined go-to-market strategy, the platform is positioned to capture significant market share in the growing travel tech sector.
 
 The project is currently in the infrastructure phase with all foundational tooling complete. Next steps focus on building core features and validating product-market fit through beta testing.
 

@@ -1,5 +1,5 @@
 -- Migration: 001_initial_schema.sql
--- Description: Initial database schema for Wanderly travel planning platform
+-- Description: Initial database schema for Voyagely travel planning platform
 -- Author: Agent-1
 -- Created: 2024
 

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('landing page renders Wanderly brand and CTA', async ({ page }) => {
+test('landing page renders Voyagely brand and CTA', async ({ page }) => {
   // Listen for console errors and page errors to debug
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -24,8 +24,8 @@ test('landing page renders Wanderly brand and CTA', async ({ page }) => {
   // Wait for React root element
   await page.waitForSelector('#root', { state: 'attached', timeout: 20000 });
 
-  // Wait for Wanderly brand using test ID - this ensures React has rendered
-  const brandText = page.getByTestId('wanderly-brand');
+  // Wait for Voyagely brand using test ID - this ensures React has rendered
+  const brandText = page.getByTestId('voyagely-brand');
   await expect(brandText).toBeVisible({ timeout: 30000 });
 
   // Check for at least one CTA link (hero, nav, or footer)

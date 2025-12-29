@@ -1,4 +1,4 @@
-# Wanderly
+# Voyagely
 
 AI-powered collaborative travel planning platform built with React, TypeScript, and Vite.
 
@@ -93,7 +93,7 @@ pnpm e2e:report
 
 ## 🌍 Internationalization (i18n)
 
-Wanderly supports multiple languages using `i18next` and `react-i18next`:
+Voyagely supports multiple languages using `i18next` and `react-i18next`:
 
 - English (en) - Default
 - French (fr)
@@ -135,7 +135,7 @@ Current setup uses browser-based detection perfect for Vite React web apps.
 ## 🏗️ Project Structure
 
 ```
-wanderly/
+voyagely/
 ├── src/
 │   ├── components/       # React components
 │   ├── contexts/         # React contexts (PostHog, etc.)
@@ -251,7 +251,7 @@ See `.env.example` for all required variables. Key ones:
 ## 📚 Documentation
 
 - [Engineering Playbook](./docs/ENGINEERING.md) - CTO-level guidelines
-- [Architecture Design](./docs/wanderly_architecture_design.md) - System architecture
+- [Architecture Design](./docs/voyagely_architecture_design.md) - System architecture
 - [Executive Summary](./docs/EXECUTIVE_SUMMARY.md) - Product vision and business overview
 - [Design System](./docs/DESIGN_SYSTEM.md) - UI/UX guidelines and component library
 

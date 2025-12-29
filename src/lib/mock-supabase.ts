@@ -79,7 +79,7 @@ class MockSupabase {
 
   // Auth methods
   getCurrentUser(): User | null {
-    return this.getStorage<User | null>('wanderly_user', null);
+    return this.getStorage<User | null>('voyagely_user', null);
   }
 
   async signUp(email: string, password: string, displayName: string): Promise<User> {
@@ -90,26 +90,26 @@ class MockSupabase {
       avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
       created_at: new Date().toISOString(),
     };
-    
+
     // Store user credentials
-    const users = this.getStorage<any[]>('wanderly_users', []);
+    const users = this.getStorage<any[]>('voyagely_users', []);
     users.push({ ...user, password });
-    this.setStorage('wanderly_users', users);
-    
+    this.setStorage('voyagely_users', users);
+
     // Set current user
-    this.setStorage('wanderly_user', user);
-    
+    this.setStorage('voyagely_user', user);
+
     return user;
   }
 
   async signIn(email: string, password: string): Promise<User> {
-    const users = this.getStorage<any[]>('wanderly_users', []);
-    const userRecord = users.find(u => u.email === email && u.password === password);
-    
+    const users = this.getStorage<any[]>('voyagely_users', []);
+    const userRecord = users.find((u) => u.email === email && u.password === password);
+
     if (!userRecord) {
       throw new Error('Invalid email or password');
     }
-    
+
     const user: User = {
       id: userRecord.id,
       email: userRecord.email,
@@ -117,13 +117,13 @@ class MockSupabase {
       avatar_url: userRecord.avatar_url,
       created_at: userRecord.created_at,
     };
-    
-    this.setStorage('wanderly_user', user);
+
+    this.setStorage('voyagely_user', user);
     return user;
   }
 
   async signOut(): Promise<void> {
-    localStorage.removeItem('wanderly_user');
+    localStorage.removeItem('voyagely_user');
   }
 
   // Trip methods
@@ -134,11 +134,11 @@ class MockSupabase {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    
-    const trips = this.getStorage<Trip[]>('wanderly_trips', []);
+
+    const trips = this.getStorage<Trip[]>('voyagely_trips', []);
     trips.push(newTrip);
-    this.setStorage('wanderly_trips', trips);
-    
+    this.setStorage('voyagely_trips', trips);
+
     // Add owner as member
     const member: TripMember = {
       id: uuidv4(),
@@ -147,45 +147,43 @@ class MockSupabase {
       role: 'owner',
       joined_at: new Date().toISOString(),
     };
-    
-    const members = this.getStorage<TripMember[]>('wanderly_members', []);
+
+    const members = this.getStorage<TripMember[]>('voyagely_members', []);
     members.push(member);
-    this.setStorage('wanderly_members', members);
-    
+    this.setStorage('voyagely_members', members);
+
     return newTrip;
   }
 
   async getTrips(userId: string): Promise<Trip[]> {
-    const trips = this.getStorage<Trip[]>('wanderly_trips', []);
-    const members = this.getStorage<TripMember[]>('wanderly_members', []);
-    
-    const userTripIds = members
-      .filter(m => m.user_id === userId)
-      .map(m => m.trip_id);
-    
-    return trips.filter(t => userTripIds.includes(t.id));
+    const trips = this.getStorage<Trip[]>('voyagely_trips', []);
+    const members = this.getStorage<TripMember[]>('voyagely_members', []);
+
+    const userTripIds = members.filter((m) => m.user_id === userId).map((m) => m.trip_id);
+
+    return trips.filter((t) => userTripIds.includes(t.id));
   }
 
   async getTrip(tripId: string): Promise<Trip | null> {
-    const trips = this.getStorage<Trip[]>('wanderly_trips', []);
-    return trips.find(t => t.id === tripId) || null;
+    const trips = this.getStorage<Trip[]>('voyagely_trips', []);
+    return trips.find((t) => t.id === tripId) || null;
   }
 
   async updateTrip(tripId: string, updates: Partial<Trip>): Promise<Trip> {
-    const trips = this.getStorage<Trip[]>('wanderly_trips', []);
-    const index = trips.findIndex(t => t.id === tripId);
-    
+    const trips = this.getStorage<Trip[]>('voyagely_trips', []);
+    const index = trips.findIndex((t) => t.id === tripId);
+
     if (index === -1) {
       throw new Error('Trip not found');
     }
-    
+
     trips[index] = {
       ...trips[index],
       ...updates,
       updated_at: new Date().toISOString(),
     };
-    
-    this.setStorage('wanderly_trips', trips);
+
+    this.setStorage('voyagely_trips', trips);
     return trips[index];
   }
 
@@ -196,42 +194,42 @@ class MockSupabase {
       id: uuidv4(),
       created_at: new Date().toISOString(),
     };
-    
-    const activities = this.getStorage<Activity[]>('wanderly_activities', []);
+
+    const activities = this.getStorage<Activity[]>('voyagely_activities', []);
     activities.push(newActivity);
-    this.setStorage('wanderly_activities', activities);
-    
+    this.setStorage('voyagely_activities', activities);
+
     return newActivity;
   }
 
   async getActivities(tripId: string): Promise<Activity[]> {
-    const activities = this.getStorage<Activity[]>('wanderly_activities', []);
-    return activities.filter(a => a.trip_id === tripId);
+    const activities = this.getStorage<Activity[]>('voyagely_activities', []);
+    return activities.filter((a) => a.trip_id === tripId);
   }
 
   async updateActivity(activityId: string, updates: Partial<Activity>): Promise<Activity> {
-    const activities = this.getStorage<Activity[]>('wanderly_activities', []);
-    const index = activities.findIndex(a => a.id === activityId);
-    
+    const activities = this.getStorage<Activity[]>('voyagely_activities', []);
+    const index = activities.findIndex((a) => a.id === activityId);
+
     if (index === -1) {
       throw new Error('Activity not found');
     }
-    
+
     activities[index] = { ...activities[index], ...updates };
-    this.setStorage('wanderly_activities', activities);
-    
+    this.setStorage('voyagely_activities', activities);
+
     return activities[index];
   }
 
   // Vote methods
   async vote(activityId: string, userId: string, choice: 'up' | 'down'): Promise<Vote> {
-    const votes = this.getStorage<Vote[]>('wanderly_votes', []);
-    
+    const votes = this.getStorage<Vote[]>('voyagely_votes', []);
+
     // Remove existing vote from this user for this activity
     const filteredVotes = votes.filter(
-      v => !(v.activity_id === activityId && v.user_id === userId)
+      (v) => !(v.activity_id === activityId && v.user_id === userId),
     );
-    
+
     const newVote: Vote = {
       id: uuidv4(),
       activity_id: activityId,
@@ -239,16 +237,16 @@ class MockSupabase {
       choice,
       created_at: new Date().toISOString(),
     };
-    
+
     filteredVotes.push(newVote);
-    this.setStorage('wanderly_votes', filteredVotes);
-    
+    this.setStorage('voyagely_votes', filteredVotes);
+
     return newVote;
   }
 
   async getVotes(activityId: string): Promise<Vote[]> {
-    const votes = this.getStorage<Vote[]>('wanderly_votes', []);
-    return votes.filter(v => v.activity_id === activityId);
+    const votes = this.getStorage<Vote[]>('voyagely_votes', []);
+    return votes.filter((v) => v.activity_id === activityId);
   }
 
   // Message methods
@@ -258,25 +256,25 @@ class MockSupabase {
       id: uuidv4(),
       created_at: new Date().toISOString(),
     };
-    
-    const messages = this.getStorage<Message[]>('wanderly_messages', []);
+
+    const messages = this.getStorage<Message[]>('voyagely_messages', []);
     messages.push(newMessage);
-    this.setStorage('wanderly_messages', messages);
-    
+    this.setStorage('voyagely_messages', messages);
+
     return newMessage;
   }
 
   async getMessages(tripId: string): Promise<Message[]> {
-    const messages = this.getStorage<Message[]>('wanderly_messages', []);
-    return messages.filter(m => m.trip_id === tripId).sort((a, b) => 
-      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    );
+    const messages = this.getStorage<Message[]>('voyagely_messages', []);
+    return messages
+      .filter((m) => m.trip_id === tripId)
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   }
 
   // Member methods
   async getTripMembers(tripId: string): Promise<TripMember[]> {
-    const members = this.getStorage<TripMember[]>('wanderly_members', []);
-    return members.filter(m => m.trip_id === tripId);
+    const members = this.getStorage<TripMember[]>('voyagely_members', []);
+    return members.filter((m) => m.trip_id === tripId);
   }
 }
 

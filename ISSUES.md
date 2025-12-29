@@ -1,4 +1,4 @@
-# Wanderly Issues & Tasks Tracker
+# Voyagely Issues & Tasks Tracker
 
 > Goal: Build a complete SaaS travel planning platform with AI-powered itineraries, real-time collaboration, and seamless user experience.
 

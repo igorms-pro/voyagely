@@ -1,6 +1,6 @@
-# Wanderly Design System
+# Voyagely Design System
 
-> Mobile-first design system for the Wanderly travel planning platform
+> Mobile-first design system for the Voyagely travel planning platform
 
 ## Design Principles
 

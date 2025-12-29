@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Wanderly"
+    "name": "Voyagely"
   },
   "common": {
     "loading": "加载中...",
@@ -36,14 +36,14 @@
     "dontHaveAccount": "没有账户？",
     "getStarted": "开始",
     "getStartedFree": "免费开始",
-    "welcomeTitle": "欢迎使用Wanderly",
+    "welcomeTitle": "欢迎使用Voyagely",
     "welcomeSubtitle": "使用AI驱动的行程规划您的完美旅行",
     "signingIn": "登录中...",
     "signInButton": "登录",
     "emailPlaceholder": "您的@示例.com",
     "passwordPlaceholder": "输入您的密码",
     "failedToSignIn": "登录失败",
-    "joinTitle": "加入Wanderly",
+    "joinTitle": "加入Voyagely",
     "joinSubtitle": "开始使用AI助手规划精彩的旅行",
     "createAccount": "创建账户",
     "creatingAccount": "创建账户中...",
@@ -282,8 +282,8 @@
     "step3Title": "Collaborate & Refine",
     "step3Desc": "Invite your travel companions, discuss options, vote on activities, and finalize your perfect trip together.",
     "ctaTitle": "Ready to Start Your Journey?",
-    "ctaSubtitle": "Join thousands of travelers planning amazing trips with Wanderly",
+    "ctaSubtitle": "Join thousands of travelers planning amazing trips with Voyagely",
     "footerTagline": "AI-powered travel planning made simple",
-    "footerRights": "2025 Wanderly. All rights reserved."
+    "footerRights": "2025 Voyagely. All rights reserved."
   }
 }

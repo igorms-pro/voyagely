@@ -24,7 +24,7 @@ test.describe('Activities and Votes', () => {
     const submitButton = page.getByTestId('login-submit-button');
 
     await expect(emailInput).toBeVisible({ timeout: 10000 });
-    await emailInput.fill('demo@wanderly.com');
+    await emailInput.fill('demo@voyagely.com');
     await passwordInput.fill('demo123');
     await submitButton.click();
 
@@ -319,7 +319,7 @@ test.describe('Activities and Votes - Real-time Updates', () => {
       // Login to both pages
       for (const page of [page1, page2]) {
         await page.goto('/login');
-        await page.getByTestId('login-email-input').fill('demo@wanderly.com');
+        await page.getByTestId('login-email-input').fill('demo@voyagely.com');
         await page.getByTestId('login-password-input').fill('demo123');
         await page.getByTestId('login-submit-button').click();
         await page.waitForURL('**/dashboard');

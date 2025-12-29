@@ -1,4 +1,4 @@
-# Wanderly Engineering Playbook (CTO-Level)
+# Voyagely Engineering Playbook (CTO-Level)
 
 ## Architecture (High-Level)
 
@@ -71,4 +71,4 @@
 
 ---
 
-This document is the engineering north star for Wanderly and the reference for developers and systems operating within it.
+This document is the engineering north star for Voyagely and the reference for developers and systems operating within it.
