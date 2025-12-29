@@ -3,7 +3,7 @@ import posthog from 'posthog-js';
 // Analytics event properties type
 type AnalyticsProperties = Record<string, string | number | boolean | null | undefined>;
 
-// Analytics event tracking utilities for Wanderly
+// Analytics event tracking utilities for Voyagely
 
 export const Analytics = {
   // User identification

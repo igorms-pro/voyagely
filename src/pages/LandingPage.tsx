@@ -27,8 +27,8 @@ export default function LandingPage() {
               <div className="flex items-center justify-center w-10 h-10 bg-white dark:bg-gray-800 rounded-xl">
                 <Plane className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
-              <span className="ml-3 text-xl font-bold text-white" data-testid="wanderly-brand">
-                Wanderly
+              <span className="ml-3 text-xl font-bold text-white" data-testid="voyagely-brand">
+                Voyagely
               </span>
             </div>
             <div className="flex items-center space-x-3">
@@ -228,7 +228,7 @@ export default function LandingPage() {
             <div className="flex items-center justify-center w-10 h-10 bg-blue-600 rounded-xl">
               <Plane className="w-6 h-6 text-white" />
             </div>
-            <span className="ml-3 text-xl font-bold text-white">Wanderly</span>
+            <span className="ml-3 text-xl font-bold text-white">Voyagely</span>
           </div>
           <p className="mb-4">{t('landing.footerTagline')}</p>
           <p className="text-sm">{t('landing.footerRights')}</p>

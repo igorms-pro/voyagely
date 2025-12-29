@@ -53,7 +53,7 @@ function App() {
       attribute="class"
       defaultTheme="system"
       enableSystem
-      storageKey="wanderly-theme"
+      storageKey="voyagely-theme"
       disableTransitionOnChange={false}
     >
       <PostHogProvider>

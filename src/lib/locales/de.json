@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Wanderly"
+    "name": "Voyagely"
   },
   "common": {
     "loading": "Wird geladen...",
@@ -36,14 +36,14 @@
     "dontHaveAccount": "Haben Sie noch kein Konto?",
     "getStarted": "Loslegen",
     "getStartedFree": "Kostenlos loslegen",
-    "welcomeTitle": "Willkommen bei Wanderly",
+    "welcomeTitle": "Willkommen bei Voyagely",
     "welcomeSubtitle": "Planen Sie Ihre perfekte Reise mit KI-gestützten Reiserouten",
     "signingIn": "Anmeldung läuft...",
     "signInButton": "Anmelden",
     "emailPlaceholder": "ihre@beispiel.com",
     "passwordPlaceholder": "Geben Sie Ihr Passwort ein",
     "failedToSignIn": "Anmeldung fehlgeschlagen",
-    "joinTitle": "Wanderly beitreten",
+    "joinTitle": "Voyagely beitreten",
     "joinSubtitle": "Beginnen Sie mit der Planung großartiger Reisen mit KI-Unterstützung",
     "createAccount": "Konto erstellen",
     "creatingAccount": "Konto wird erstellt...",
@@ -282,8 +282,8 @@
     "step3Title": "Collaborate & Refine",
     "step3Desc": "Invite your travel companions, discuss options, vote on activities, and finalize your perfect trip together.",
     "ctaTitle": "Ready to Start Your Journey?",
-    "ctaSubtitle": "Join thousands of travelers planning amazing trips with Wanderly",
+    "ctaSubtitle": "Join thousands of travelers planning amazing trips with Voyagely",
     "footerTagline": "AI-powered travel planning made simple",
-    "footerRights": "2025 Wanderly. All rights reserved."
+    "footerRights": "2025 Voyagely. All rights reserved."
   }
 }

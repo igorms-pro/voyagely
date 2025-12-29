@@ -74,7 +74,7 @@ describe('LoginPage', () => {
     const emailInput = screen.getByTestId('login-email-input') as HTMLInputElement;
     const passwordInput = screen.getByTestId('login-password-input') as HTMLInputElement;
 
-    expect(emailInput.value).toBe('demo@wanderly.com');
+    expect(emailInput.value).toBe('demo@voyagely.com');
     expect(passwordInput.value).toBe('demo123');
   });
 

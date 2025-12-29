@@ -4,12 +4,12 @@ import { BrowserRouter } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 
 describe('App', () => {
-  it('renders landing page with Wanderly brand', () => {
+  it('renders landing page with Voyagely brand', () => {
     render(
       <BrowserRouter>
         <LandingPage />
       </BrowserRouter>,
     );
-    expect(screen.getByTestId('wanderly-brand')).toBeInTheDocument();
+    expect(screen.getByTestId('voyagely-brand')).toBeInTheDocument();
   });
 });

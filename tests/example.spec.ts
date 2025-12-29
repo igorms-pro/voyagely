@@ -1,6 +1,6 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '@playwright/test';
 
 test('landing page renders', async ({ page }) => {
-  await page.goto('/')
-  await expect(page.locator('body')).toContainText(/Wanderly/i)
-})
+  await page.goto('/');
+  await expect(page.locator('body')).toContainText(/Voyagely/i);
+});

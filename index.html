@@ -7,7 +7,7 @@
   <script>
     // Prevent flash of unstyled content (FOUC) for dark mode
     (function() {
-      const theme = localStorage.getItem('wanderly-theme');
+      const theme = localStorage.getItem('voyagely-theme');
       const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       
       if (theme === 'dark' || (!theme && systemPrefersDark)) {

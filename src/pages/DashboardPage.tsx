@@ -242,7 +242,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-center w-10 h-10 bg-blue-600 dark:bg-blue-500 rounded-xl">
                 <Plane className="w-6 h-6 text-white" />
               </div>
-              <h1 className="ml-3 text-xl font-bold text-gray-900 dark:text-gray-100">Wanderly</h1>
+              <h1 className="ml-3 text-xl font-bold text-gray-900 dark:text-gray-100">Voyagely</h1>
             </div>
 
             <div className="flex items-center space-x-4">

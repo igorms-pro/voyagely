@@ -11,7 +11,7 @@ describe('LandingPage', () => {
       </BrowserRouter>,
     );
 
-    expect(screen.getByTestId('wanderly-brand')).toBeInTheDocument();
+    expect(screen.getByTestId('voyagely-brand')).toBeInTheDocument();
   });
 
   it('renders hero section with title and description', () => {
@@ -84,7 +84,7 @@ describe('LandingPage', () => {
 
     // The "How It Works" section should be present
     // We can check for step numbers or titles
-    const page = screen.getByTestId('wanderly-brand').closest('div');
+    const page = screen.getByTestId('voyagely-brand').closest('div');
     expect(page).toBeInTheDocument();
   });
 });
