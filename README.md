@@ -251,9 +251,9 @@ See `.env.example` for all required variables. Key ones:
 ## 📚 Documentation
 
 - [Engineering Playbook](./docs/ENGINEERING.md) - CTO-level guidelines
-- [Architecture Design](./docs/voyagely_architecture_design.md) - System architecture
+- [Architecture Design](./docs/architecture_design.md) - System architecture
 - [Executive Summary](./docs/EXECUTIVE_SUMMARY.md) - Product vision and business overview
-- [Design System](./docs/DESIGN_SYSTEM.md) - UI/UX guidelines and component library
+- [Design System](./docs/design/design-system.md) - UI/UX guidelines and component library
 
 ## 🤝 Contributing
 
